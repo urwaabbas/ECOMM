@@ -1,13 +1,8 @@
 // lib/email.ts
 import nodemailer from "nodemailer";
 
-export async function sendVerificationEmail(
-  email: string,
-  token: string,
-  name: string,
-) {
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://ecomm-mu-lilac.vercel.app/";
+export async function sendVerificationEmail(email: string, token: string, name: string) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const verificationUrl = `${appUrl}/api/verify-email?token=${token}`;
 
   // 1. Gather SMTP Environment Variables
@@ -15,17 +10,12 @@ export async function sendVerificationEmail(
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
-  const from =
-    process.env.SMTP_FROM || `"E-Shop Support" <no-reply@yourdomain.com>`;
+  const from = process.env.SMTP_FROM || `"E-Shop Support" <no-reply@yourdomain.com>`;
 
   // 2. Safety Guard against missing setup variables
   if (!host || !user || !pass) {
-    console.error(
-      "❌ SMTP Environment Variables (SMTP_HOST, SMTP_USER, or SMTP_PASSWORD) are missing!",
-    );
-    throw new Error(
-      "SMTP credentials are not configured in your .env.local file.",
-    );
+    console.error("❌ SMTP Environment Variables (SMTP_HOST, SMTP_USER, or SMTP_PASSWORD) are missing!");
+    throw new Error("SMTP credentials are not configured in your .env.local file.");
   }
 
   // 3. Create SMTP Transporter
@@ -66,8 +56,7 @@ export async function sendVerificationEmail(
     });
     console.log(`✅ SMTP verification email successfully sent to: ${email}`);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown SMTP error";
+    const message = error instanceof Error ? error.message : "Unknown SMTP error";
     console.error("❌ SMTP email delivery failed:", message);
     throw new Error(`Could not send SMTP verification email: ${message}`);
   }
