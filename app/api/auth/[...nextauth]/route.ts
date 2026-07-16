@@ -1,77 +1,9 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs"; 
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth";
+import { authOptions } from "./options";
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing credentials");
-        }
-
-        await dbConnect();
-
-        const user = await User.findOne({ email: credentials.email });
-        if (!user) {
-          throw new Error("No user found with this email");
-        }
-
-        if (!user.isVerified) {
-          throw new Error(
-            "Please verify your email address before logging in.",
-          );
-        }
-
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-        if (!isValid) {
-          throw new Error("Incorrect password");
-        }
-
-        return {
-          id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (session.user) {
-        // Cast session.user to 'any' to bypass the missing 'id' property type error
-        (session.user as any).id = token.id as string;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-};
 
 const handler = NextAuth(authOptions);
+
+// Only export HTTP handlers!
 export { handler as GET, handler as POST };
