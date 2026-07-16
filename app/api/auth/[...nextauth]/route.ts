@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs"; 
+import bcrypt from "bcryptjs"; // Or "bcrypt" depending on what you installed
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 
@@ -57,8 +57,7 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        // Option B: Cast to any to bypass the missing 'id' type constraint
-        (session.user as any).id = token.id as string;
+        session.user.id = token.id as string;
       }
       return session;
     },
