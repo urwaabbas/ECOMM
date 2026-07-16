@@ -7,7 +7,6 @@ export async function handleRegister(request: Request) {
     const body = await request.json();
     const { name, email, password } = body;
 
-  
     if (!email || !name || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required" },
@@ -15,7 +14,6 @@ export async function handleRegister(request: Request) {
       );
     }
 
-    
     if (!email.includes("@") || !email.includes(".")) {
       return NextResponse.json(
         { error: "Please enter a valid email address" },
@@ -27,8 +25,10 @@ export async function handleRegister(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Registered Successfully",
+        message:
+          "Registered successfully. Please verify your email before logging in.",
         user: newUser,
+        verificationUrl: newUser.verificationUrl,
       },
       { status: 201 },
     );

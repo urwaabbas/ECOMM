@@ -5,7 +5,7 @@ import User from "@/models/User";
 
 export async function GET(request: Request) {
   try {
-    // 1. Extract the token from the query parameters
+  
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
 
@@ -18,10 +18,10 @@ export async function GET(request: Request) {
 
     await dbConnect();
 
-    // 2. Find user by verification token AND ensure the token has not expired yet
+
     const user = await User.findOne({
       verificationToken: token,
-      verificationTokenExpires: { $gt: new Date() }, // Expiry date must be in the future
+      verificationTokenExpires: { $gt: new Date() }, 
     });
 
     if (!user) {
@@ -31,14 +31,12 @@ export async function GET(request: Request) {
       );
     }
 
-    // 3. Update the user status: mark as verified, and clear the token fields
+
     user.isVerified = true;
     user.verificationToken = null;
     user.verificationTokenExpires = null;
     await user.save();
 
-    // 4. Redirect the user directly to your login page with a success query parameter
-    // (This ensures they don't just see raw JSON, they get redirected to your beautiful UI!)
     const loginUrl = new URL("/login?verified=true", request.url);
     return NextResponse.redirect(loginUrl);
 
@@ -47,6 +45,9 @@ export async function GET(request: Request) {
     return NextResponse.json(
       { error: "An unexpected error occurred during verification." },
       { status: 500 }
+
     );
   }
 }
+
+

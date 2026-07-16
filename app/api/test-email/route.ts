@@ -1,59 +1,56 @@
-// app/api/register/route.ts
+// app/api/verify-email/route.ts
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import crypto from "crypto"; // Built-in Node.js module
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
-import { sendVerificationEmail } from "@/lib/email";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const { name, email, password } = await request.json();
+    // 1. Extract and validate the token from the URL parameters
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get("token");
 
-    // 1. Basic Validation
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    if (!token) {
+      console.warn("⚠️ Verification attempt failed: Missing token.");
+      return NextResponse.json(
+        { error: "Verification token is missing." },
+        { status: 400 }
+      );
     }
 
+    // 2. Connect to Database
     await dbConnect();
 
-    // 2. Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return NextResponse.json({ error: "Email is already registered" }, { status: 400 });
-    }
-
-    // 3. Hash Password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // 4. Generate Verification Token & Expiry (24 Hours)
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    // 5. Create the User in DB
-    const newUser = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      isVerified: false, // Explicitly unverified on signup
-      verificationToken,
-      verificationTokenExpires,
+    // 3. Locate user with non-expired token
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: new Date() }, // Token must expire in the future
     });
 
-    // 6. Send the Email (Asynchronously, so the user registration doesn't wait)
-    try {
-      await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
-    } catch (emailError) {
-      console.error("User created but verification email failed to send:", emailError);
-      // We don't block the API response if the email sending fails, but we log it.
+    if (!user) {
+      console.warn("⚠️ Verification attempt failed: Invalid or expired token.");
+      return NextResponse.json(
+        { error: "Invalid token or verification link has expired." },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(
-      { message: "Registration successful! Please check your email to verify your account." },
-      { status: 201 }
-    );
+    // 4. Mark user as verified and clear temporary fields
+    user.isVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpires = null;
+    await user.save();
+
+    console.log(`✅ User verified successfully: ${user.email}`);
+
+    // 5. Redirect user to the login screen with a query flag to trigger UI success state
+    const loginUrl = new URL("/login?verified=true", request.url);
+    return NextResponse.redirect(loginUrl);
+
   } catch (error: any) {
-    console.error("Registration error:", error);
-    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 550 });
+    console.error("❌ Email verification backend error:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred during verification." },
+      { status: 500 }
+    );
   }
 }

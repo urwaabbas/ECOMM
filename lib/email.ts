@@ -1,14 +1,41 @@
-
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+// lib/email.ts
+import nodemailer from "nodemailer";
 
 export async function sendVerificationEmail(email: string, token: string, name: string) {
-  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-email?token=${token}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const verificationUrl = `${appUrl}/api/verify-email?token=${token}`;
 
+  // 1. Gather SMTP Environment Variables
+  const host = process.env.SMTP_HOST;
+  const port = parseInt(process.env.SMTP_PORT || "587", 10);
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD;
+  const from = process.env.SMTP_FROM || `"E-Shop Support" <no-reply@yourdomain.com>`;
+
+  // 2. Safety Guard against missing setup variables
+  if (!host || !user || !pass) {
+    console.error("❌ SMTP Environment Variables (SMTP_HOST, SMTP_USER, or SMTP_PASSWORD) are missing!");
+    throw new Error("SMTP credentials are not configured in your .env.local file.");
+  }
+
+  // 3. Create SMTP Transporter
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465, // Use SSL for port 465, TLS/STARTTLS for port 587
+    auth: {
+      user,
+      pass,
+    },
+    tls: {
+      rejectUnauthorized: false, // Prevents certificate blockages in local environments
+    },
+  });
+
+  // 4. Send Email
   try {
-    await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>", // Resend's free default sender address
+    await transporter.sendMail({
+      from,
       to: email,
       subject: "Verify your email address",
       html: `
@@ -27,9 +54,10 @@ export async function sendVerificationEmail(email: string, token: string, name: 
         </div>
       `,
     });
-    console.log(`Verification email successfully sent to: ${email}`);
+    console.log(`✅ SMTP verification email successfully sent to: ${email}`);
   } catch (error) {
-    console.error("Failed to send verification email:", error);
-    throw new Error("Could not send verification email.");
+    const message = error instanceof Error ? error.message : "Unknown SMTP error";
+    console.error("❌ SMTP email delivery failed:", message);
+    throw new Error(`Could not send SMTP verification email: ${message}`);
   }
 }

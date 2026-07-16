@@ -16,23 +16,42 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         await dbConnect();
 
-        // 1. Find user by email
-        const user = await User.findOne({ email: credentials?.email });
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Email and password are required");
+        }
+
+        const user = await User.findOne({ email: credentials.email });
         if (!user) {
           throw new Error("No user found with this email");
         }
 
-        // 2. Verify password
-        const isValid = await bcrypt.compare(credentials!.password, user.password);
+        const storedPassword =
+          typeof user.password === "string" ? user.password : "";
+        if (!storedPassword) {
+          throw new Error("Invalid email or password");
+        }
+
+        let isValid = false;
+        try {
+          isValid = await bcrypt.compare(
+            String(credentials.password),
+            storedPassword,
+          );
+        } catch (error) {
+          console.error("Bcrypt compare failed", error);
+          throw new Error("Invalid email or password");
+        }
+
         if (!isValid) {
-          throw new Error("Invalid password");
+          throw new Error("Invalid email or password");
         }
 
         if (!user.isVerified) {
-          throw new Error("Please verify your email address before logging in.");
+          throw new Error(
+            "Please verify your email address before logging in.",
+          );
         }
 
-        // Return user object if everything is valid
         return {
           id: user._id.toString(),
           name: user.name,
@@ -68,4 +87,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST }; // Keeps your App Router endpoints working!
+export { handler as GET, handler as POST };
