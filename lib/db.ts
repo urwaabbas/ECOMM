@@ -4,12 +4,6 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error(
-    "Please define MONGODB_URI environment first to catch the variable",
-  );
-}
-
 interface GlobalMongoose {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -24,31 +18,26 @@ let cached = global.mongoose;
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
-// lib/db.ts
+
 const opts = {
   bufferCommands: false,
-  family: 4, // Forces Mongoose to use IPv4 instead of IPv6
+  family: 4,
 };
 
-cached.promise = mongoose
-  .connect(MONGODB_URI, opts)
-  .then((mongooseInstance) => {
-    console.log("✅ SUCCESS! MongoDB Connected Successfully!");
-    return mongooseInstance;
-  });
-
 async function dbConnect() {
+  if (!MONGODB_URI) {
+    throw new Error("Please define MONGODB_URI environment variable");
+  }
+
   if (cached!.conn) {
     return cached!.conn;
   }
 
   if (!cached!.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
     cached!.promise = mongoose
-      .connect(MONGODB_URI!, opts)
+      .connect(MONGODB_URI, opts)
       .then((mongooseInstance) => {
+        console.log("✅ SUCCESS! MongoDB Connected Successfully!");
         return mongooseInstance;
       });
   }

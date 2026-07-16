@@ -1,49 +1,27 @@
-// app/api/auth/[...nextauth]/route.ts
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs"; // Or "bcrypt" depending on what you installed
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        await dbConnect();
-
-        if (!credentials?.email || !credentials.password) {
-          throw new Error("Email and password are required");
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Missing credentials");
         }
+
+        await dbConnect();
 
         const user = await User.findOne({ email: credentials.email });
         if (!user) {
           throw new Error("No user found with this email");
-        }
-
-        const storedPassword =
-          typeof user.password === "string" ? user.password : "";
-        if (!storedPassword) {
-          throw new Error("Invalid email or password");
-        }
-
-        let isValid = false;
-        try {
-          isValid = await bcrypt.compare(
-            String(credentials.password),
-            storedPassword,
-          );
-        } catch (error) {
-          console.error("Bcrypt compare failed", error);
-          throw new Error("Invalid email or password");
-        }
-
-        if (!isValid) {
-          throw new Error("Invalid email or password");
         }
 
         if (!user.isVerified) {
@@ -52,10 +30,18 @@ export const authOptions: NextAuthOptions = {
           );
         }
 
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password,
+        );
+        if (!isValid) {
+          throw new Error("Incorrect password");
+        }
+
         return {
           id: user._id.toString(),
-          name: user.name,
           email: user.email,
+          name: user.name,
           role: user.role,
         };
       },
@@ -64,21 +50,21 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).id;
-        token.role = (user as any).role;
+        token.id = user.id;
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        session.user.id = token.id as string;
       }
       return session;
     },
   },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
