@@ -1,53 +1,40 @@
-import mongoose , {Schema , Document , Model} from "mongoose";
+// models/User.ts (or your path to User schema)
+import mongoose, { Schema, model, models } from "mongoose";
 
-export interface IUser extends Document{
-  name : string;
-  email : string;
-  passwordHash : string ;
-  role : 'user' | 'admin';
-  isVerified :boolean ;
-  verificationToken? : string;
-  createdAt : Date;
-  updatedAt : Date ;
-
-}
-
-const UserSchema = new Schema<IUser>(
+const UserSchema = new Schema(
   {
-    name :{
-      type : String ,
-      required : [true ,'Please provide the Name'],
-      trim : true
+    name: {
+      type: String,
+      required: [true, "Name is required"],
     },
-    email :{
-      type : String,
-      required : [true , 'Please enter the email'],
-      unique : true,
-      lowercase : true ,
-      trim : true,
+    email: {
+      type: String,
+      unique: true,
+      required: [true, "Email is required"],
     },
-    passwordHash:{
-      type : String ,
-      required : [true , 'please enter the password'],
+    password: {
+      type: String,
+      required: [true, "Password is required"],
     },
-    role : {
-      type : String ,
-      enum :['user' , 'admin'],
-      default : 'user',
+    role: {
+      type: String,
+      default: "user",
     },
-    isVerified:{
-      type : Boolean ,
-      default : false ,
+    isVerified: {
+      type: Boolean,
+      default: false, // Users starts as unverified
     },
-    verificationToken:{
-      type : String,
+    verificationToken: {
+      type: String,
+      default: null, // Holds the active verification token
+    },
+    verificationTokenExpires: {
+      type: Date,
+      default: null, // Expiry timestamp for the token
     },
   },
-  {
-  timestamps : true
-  }
+  { timestamps: true }
 );
 
-const User: Model<IUser> = mongoose.models?.User || mongoose.model<IUser>('User', UserSchema);   
-
+const User = models.User || model("User", UserSchema);
 export default User;
