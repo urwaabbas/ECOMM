@@ -16,30 +16,35 @@ export default function Navbar() {
     { name: "Products", href: "/products" },
   ];
 
-  const toggleMenu = () => setIsOpen(!isOpen);
+  // Fallback helper to extract a clean string name if session.user.name is undefined
+  const getUserDisplayName = () => {
+    if (!session?.user) return "";
+    const name = session.user.name || session.user.email?.split("@")[0] || "USER";
+    return name;
+  };
 
   return (
-    <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
+    <nav className="w-full bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Brand Logo Anchor */}
+          {/* Brand Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-xl font-black text-gray-900 tracking-tighter uppercase">
+            <Link href="/" className="text-xl font-black text-gray-900 tracking-tight uppercase">
               Haanli<span className="text-indigo-600">Bazaar</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex space-x-1">
+          {/* Desktop Links Grid */}
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-xl transition ${
-                    isActive ? "bg-gray-900 text-white" : "text-gray-900 hover:bg-gray-50"
+                  className={`text-sm font-bold tracking-wide uppercase transition-colors ${
+                    isActive ? "text-indigo-600" : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   {link.name}
@@ -48,47 +53,48 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Desktop Authentication Section */}
+          {/* Desktop Authentication Row Layout */}
           <div className="hidden md:flex items-center gap-4">
             {status === "loading" ? (
               <div className="w-20 h-8 bg-gray-50 rounded-xl animate-pulse" />
             ) : session ? (
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                  Hi, {session.user?.name?.split("@")[0]}
+              <div className="flex items-center gap-5">
+                {/* Removed "Hi", set user profile string to clean bold tracking-wide uppercase text layout */}
+                <span className="text-sm font-black text-gray-900 uppercase tracking-wide">
+                  {getUserDisplayName()}
                 </span>
                 <button
                   onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="text-xs font-bold uppercase text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl transition"
+                  className="text-sm font-bold text-red-600 hover:text-red-700 uppercase tracking-wider transition"
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <Link
                   href="/login"
-                  className="text-xs font-bold uppercase text-gray-900 hover:bg-gray-50 px-4 py-2 rounded-xl transition"
+                  className="text-sm font-bold text-gray-700 hover:text-gray-900 uppercase tracking-wider transition"
                 >
-                  Login
+                  Log In
                 </Link>
                 <Link
                   href="/register"
-                  className="text-xs font-bold uppercase bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-xl transition"
+                  className="text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-2 rounded-xl uppercase tracking-wider transition shadow-xs"
                 >
-                  Join
+                  Sign Up
                 </Link>
               </div>
             )}
           </div>
 
-          {/* Mobile Hamburger Button */}
+          {/* Mobile Menu Actions Button Toggle */}
           <div className="flex md:hidden">
             <button
-              onClick={toggleMenu}
+              onClick={() => setIsOpen(!isOpen)}
               type="button"
-              className="text-gray-900 hover:bg-gray-50 p-2 rounded-xl focus:outline-none"
-              aria-label="Toggle Menu"
+              className="text-gray-700 hover:bg-gray-50 p-2 rounded-xl focus:outline-none transition"
+              aria-label="Toggle Menu Panel"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isOpen ? (
@@ -103,64 +109,73 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Panel Dropdown */}
+      {/* Floating absolute responsive dropdown panel */}
       {isOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 pt-2 pb-6 space-y-4 shadow-sm absolute left-0 w-full animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="flex flex-col space-y-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 text-sm font-bold uppercase tracking-wider rounded-xl transition ${
-                    isActive ? "bg-gray-900 text-white" : "text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-          </div>
+        <div className="absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl z-50 md:hidden animate-in fade-in slide-in-from-top-1 duration-100">
+          <div className="px-4 pt-3 pb-6 space-y-4">
+            
+            {/* Nav Links Navigation Block */}
+            <div className="flex flex-col space-y-1">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className={`px-3 py-2.5 text-base font-bold uppercase tracking-wide rounded-xl transition ${
+                      isActive ? "bg-indigo-50 text-indigo-600" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
+            </div>
 
-          {/* Mobile Auth Actions Stacked Cleanly */}
-          <div className="pt-4 border-t border-gray-100 px-4">
-            {status === "loading" ? (
-              <div className="h-9 bg-gray-50 rounded-xl animate-pulse w-full" />
-            ) : session ? (
-              <div className="flex flex-col space-y-3">
-                <span className="text-xs font-bold text-gray-500 text-center bg-gray-50 py-2 rounded-xl border border-gray-100">
-                  Logged in as: {session.user?.name}
-                </span>
-                <button
-                  onClick={() => {
-                    setIsOpen(false);
-                    signOut({ callbackUrl: "/login" });
-                  }}
-                  className="w-full text-center text-sm font-bold uppercase text-red-600 bg-red-50/50 hover:bg-red-50 py-2.5 rounded-xl transition"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-2">
-                <Link
-                  href="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full text-center text-sm font-bold uppercase text-gray-900 border border-gray-200 hover:bg-gray-50 py-2.5 rounded-xl transition"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full text-center text-sm font-bold uppercase bg-indigo-600 text-white hover:bg-indigo-700 py-2.5 rounded-xl transition"
-                >
-                  Join Now
-                </Link>
-              </div>
-            )}
+            {/* Border Separation Splitter */}
+            <div className="border-t border-gray-100 my-2" />
+
+            {/* Session Action Callouts */}
+            <div className="px-3">
+              {status === "loading" ? (
+                <div className="h-10 bg-gray-50 rounded-xl animate-pulse w-full" />
+              ) : session ? (
+                <div className="flex flex-col space-y-3">
+                  {/* Clean uppercase presentation text string layout matching desktop profile context */}
+                  <div className="text-sm font-black text-gray-900 uppercase tracking-wide text-center bg-gray-50 py-2 rounded-xl border border-gray-100">
+                    {getUserDisplayName()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      signOut({ callbackUrl: "/login" });
+                    }}
+                    className="w-full text-center text-sm font-bold uppercase tracking-wider text-red-600 bg-red-50/50 hover:bg-red-50 py-3 rounded-xl transition"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col space-y-2.5">
+                  <Link
+                    href="/login"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full text-center text-sm font-bold uppercase tracking-wider text-gray-700 border border-gray-200 hover:bg-gray-50 py-3 rounded-xl transition"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setIsOpen(false)}
+                    className="w-full text-center text-sm font-bold uppercase tracking-wider bg-indigo-600 text-white hover:bg-indigo-700 py-3 rounded-xl transition shadow-xs"
+                  >
+                    Sign Up
+                  </Link>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}
