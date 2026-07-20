@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { formatPricePKR } from "@/lib/utilis";
 
 interface ProductDetail {
   _id: string;
@@ -143,11 +144,11 @@ export default function ProductDetailPage() {
           {/* Pricing blocks */}
           <div className="flex items-baseline gap-3 py-4 border-y border-gray-100">
             <span className="text-3xl font-black text-gray-900">
-              ${product.discountPrice || product.price}
+              {formatPricePKR(product.discountPrice || product.price)}
             </span>
             {product.discountPrice && (
               <span className="text-sm text-gray-400 line-through">
-                ${product.price}
+                {formatPricePKR(product.price)}
               </span>
             )}
           </div>
