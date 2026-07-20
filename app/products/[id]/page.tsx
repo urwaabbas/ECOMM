@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 
 interface ProductDetail {
@@ -21,12 +22,9 @@ interface ProductDetail {
   };
 }
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { id } = params;
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = params?.id as string | undefined;
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +33,12 @@ export default function ProductDetailPage({
 
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!id) {
+        setError("Product identifier is missing from the route.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch(`/api/products/${id}`);
         const data = await res.json();

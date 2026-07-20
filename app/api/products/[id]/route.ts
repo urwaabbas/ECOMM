@@ -48,8 +48,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await dbConnect();
-
     const { id } = await params;
 
     if (!id) {
@@ -59,14 +57,36 @@ export async function GET(
       );
     }
 
-    const product = await Product.findById(id)
-      .populate("category", "name slug")
-      .lean();
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    const isSeedProduct = id.startsWith("seed-");
+    let product = null;
+
+    if (isValidObjectId && !isSeedProduct) {
+      try {
+        await dbConnect();
+        product = await Product.findById(id)
+          .populate("category", "name slug")
+          .lean();
+      } catch (dbError: any) {
+        console.warn(
+          "Product detail DB lookup failed, falling back to seeded product data:",
+          dbError.message,
+        );
+      }
+    }
 
     if (!product) {
       const fallbackProduct = initialProducts.find(
-        (item: any) => item.name === id || item.title === id,
+        (item: any, index: number) => {
+          return (
+            item._id?.toString?.() === id ||
+            item.name === id ||
+            item.title === id ||
+            `seed-${index}` === id
+          );
+        },
       );
+
       if (fallbackProduct) {
         return NextResponse.json(normalizeProduct(fallbackProduct), {
           status: 200,
@@ -78,15 +98,9 @@ export async function GET(
         { status: 404 },
       );
     }
+
     return NextResponse.json(normalizeProduct(product), { status: 200 });
   } catch (error: any) {
-    if (error.name === "CastError") {
-      return NextResponse.json(
-        { error: "Invalid product identification code structure" },
-        { status: 400 },
-      );
-    }
-
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
