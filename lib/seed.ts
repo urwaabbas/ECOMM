@@ -1,115 +1,251 @@
 // lib/seed.ts
-import dbConnect from "./db";
-import Category from "../models/Category";
-import Product from "../models/Product";
 
-const sampleCategories = [
-  { name: "Electronics", slug: "electronics", description: "High-end devices, gadgets, and computers" },
-  { name: "Apparel", slug: "apparel", description: "Minimalist clothing, footwear, and seasonal collections" },
-  { name: "Accessories", slug: "accessories", description: "Timeless wallets, backpacks, and everyday carry gear" }
-];
-
-const sampleProducts = [
+export const initialProducts = [
+  // --- ELECTRONICS ---
   {
-    title: "Minimalist Leather Backpack",
-    description: "Crafted from premium full-grain leather. Features a protective 15-inch laptop sleeve, water-resistant zippers, and ergonomic shoulder straps designed for maximum daily comfort.",
-    price: 149.99,
-    discountPrice: 129.99,
-    categoryName: "Accessories", // Used temporarily to look up the assigned ObjectId during insertion
-    images: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80"],
-    stock: 24,
-    isFeatured: true,
-    ratings: { average: 4.8, count: 42 }
+    name: "Premium Wireless Headphones",
+    description: "High-fidelity sound with dynamic active noise cancellation and 40-hour battery life.",
+    price: 299.99,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop",
+    stock: 12,
   },
   {
-    title: "Ergonomic Mechanical Keyboard",
-    description: "Hot-swappable mechanical switches with custom PBT keycaps. Full RGB backlighting control and premium aluminum frame with multi-device Bluetooth and 2.4Ghz connectivity.",
-    price: 119.99,
-    discountPrice: null,
-    categoryName: "Electronics",
-    images: ["https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80"],
-    stock: 15,
-    isFeatured: true,
-    ratings: { average: 4.6, count: 18 }
+    name: "Ergonomic Mechanical Keyboard",
+    description: "Tactile typing response with hot-swappable switches, wireless connectivity, and RGB lighting.",
+    price: 129.50,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=600&auto=format&fit=crop",
+    stock: 25,
   },
   {
-    title: "Premium Heavyweight Hoodie",
-    description: "Loopback French terry knit hoodie made from 100% organic cotton. Pre-shrunk, ultra-comfortable 450gsm drape tailored for modern layering.",
-    price: 85.00,
-    discountPrice: null,
-    categoryName: "Apparel",
-    images: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80"],
-    stock: 50,
-    isFeatured: false,
-    ratings: { average: 4.9, count: 65 }
+    name: "Ultra-Wide Gaming Monitor",
+    description: "34-inch curved display panel featuring 144Hz refresh rate and 1ms response latency.",
+    price: 449.99,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3a56?q=80&w=600&auto=format&fit=crop",
+    stock: 7,
   },
   {
-    title: "Wireless Noise-Canceling Headphones",
-    description: "Active ambient noise cancellation with studio-grade high fidelity audio drivers. Includes memory foam ear cups and a built-in battery delivering up to 40 hours of continuous playback.",
+    name: "Wireless Ergonomic Mouse",
+    description: "High-precision optical tracker built to minimize wrist fatigue over long operations.",
+    price: 79.99,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1527864550417-7fd91051a465?q=80&w=600&auto=format&fit=crop",
+    stock: 40,
+  },
+  {
+    name: "4K Streaming Webcam",
+    description: "Pro-tier capture lens with autofocus matrices and optimized dual stereo audio microphones.",
+    price: 99.00,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1588649036666-887556a3e5c9?q=80&w=600&auto=format&fit=crop",
+    stock: 18,
+  },
+  {
+    name: "Portable Bluetooth Speaker",
+    description: "IPX7 completely waterproof external casing with rich omnidirectional audio acoustics.",
+    price: 59.99,
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=600&auto=format&fit=crop",
+    stock: 30,
+  },
+  {
+    name: "Smart Watch Series X",
+    description: "Always-on cellular network connectivity tracking advanced health and vitals records metrics.",
     price: 249.99,
-    discountPrice: 199.99,
-    categoryName: "Electronics",
-    images: ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80"],
+    category: "Electronics",
+    image: "https://images.unsplash.com/photo-1546868871-704132a5d082?q=80&w=600&auto=format&fit=crop",
+    stock: 15,
+  },
+
+  // --- APPAREL ---
+  {
+    name: "Minimalist Leather Backpack",
+    description: "Waterproof structural protection design built for daily travel and laptop storage.",
+    price: 89.99,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop",
     stock: 8,
-    isFeatured: true,
-    ratings: { average: 4.7, count: 112 }
   },
   {
-    title: "Classic Matte Slim Wallet",
-    description: "RFID-blocking aerospace aluminum construction cardholder wrapped in premium leather trim. Holds up to 12 cards without stretching or adding bulk to your pocket.",
-    price: 45.00,
-    discountPrice: 39.99,
-    categoryName: "Accessories",
-    images: ["https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80"],
+    name: "Classic Denim Jacket",
+    description: "Timeless relaxed fit crafted using entirely organic heavyweight raw cotton materials.",
+    price: 75.00,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?q=80&w=600&auto=format&fit=crop",
+    stock: 14,
+  },
+  {
+    name: "Waterproof Windbreaker Jacket",
+    description: "Ultralight breathable external dynamic shielding matrix optimized for outdoor hiking tracks.",
+    price: 110.00,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1544923246-77be07ef3443?q=80&w=600&auto=format&fit=crop",
+    stock: 22,
+  },
+  {
+    name: "Organic Cotton Premium Hoodie",
+    description: "Luxurious brushed loopback inner fleece lining giving maximized cold weather retention.",
+    price: 65.00,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600&auto=format&fit=crop",
     stock: 35,
-    isFeatured: false,
-    ratings: { average: 4.4, count: 29 }
+  },
+  {
+    name: "Urban Knit Running Sneakers",
+    description: "Flexible performance woven grid mesh providing optimal air cross ventilation framework.",
+    price: 95.00,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+    stock: 19,
+  },
+  {
+    name: "Polarized UV Aviator Sunglasses",
+    description: "Shatterproof dynamic compound layout structure framing premium high UV safety coatings.",
+    price: 45.00,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600&auto=format&fit=crop",
+    stock: 50,
+  },
+  {
+    name: "All-Weather Leather Boots",
+    description: "Full-grain waterproof treated hide construction with deep rubber lug traction grids.",
+    price: 159.99,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1542280756-74b2f51e7b78?q=80&w=600&auto=format&fit=crop",
+    stock: 11,
+  },
+  {
+    name: "Smart Hybrid Travel Blazer",
+    description: "Wrinkle-resistant structured tailoring blend optimized for rapid corporate travel loops.",
+    price: 135.50,
+    category: "Apparel",
+    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop",
+    stock: 16,
+  },
+
+  // --- HOME & LIVING ---
+  {
+    name: "Stainless Steel Smart Bottle",
+    description: "Insulated hot/cold thermos feature tracking real-time fluid temp indicators safely.",
+    price: 45.00,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop",
+    stock: 40,
+  },
+  {
+    name: "Aromatherapy Oil Diffuser",
+    description: "Ultrasonic cool mist vapor matrix incorporating 7 rotating chromatic light tracks.",
+    price: 29.99,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad81a8?q=80&w=600&auto=format&fit=crop",
+    stock: 60,
+  },
+  {
+    name: "Ergonomic Memory Foam Pillow",
+    description: "Contoured cervical posture corrective foam cooling matrix reducing sleeping neck strain.",
+    price: 49.50,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1635398200631-5f257a02b123?q=80&w=600&auto=format&fit=crop",
+    stock: 24,
+  },
+  {
+    name: "Chef Pro Ceramic Knife Set",
+    description: "6 essential diamond-sharp hardening carbon core blades matching protective sleeves.",
+    price: 89.99,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1593618998160-caf454c70e0d?q=80&w=600&auto=format&fit=crop",
+    stock: 13,
+  },
+  {
+    name: "Smart LED Desk Luminary",
+    description: "Dimmable architectural workspace pole light containing custom USB fast charge hub arrays.",
+    price: 39.99,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1534568863004-9488a0e0586e?q=80&w=600&auto=format&fit=crop",
+    stock: 33,
+  },
+  {
+    name: "Handwoven Cotton Throw Blanket",
+    description: "Artisan cross-threaded natural blanket providing cozy comfort additions to modern spaces.",
+    price: 34.99,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1616486703565-1801267910e4?q=80&w=600&auto=format&fit=crop",
+    stock: 45,
+  },
+  {
+    name: "Minimalist Stoneware Dinner Set",
+    description: "16-piece complete organic matte finish structural plate layout setting four dynamic slots.",
+    price: 115.00,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1584226427754-8e348939c0c1?q=80&w=600&auto=format&fit=crop",
+    stock: 9,
+  },
+  {
+    name: "Indoor Air Purifier Tower",
+    description: "True H13 high HEPA structural filtration layer trapping 99.97% microscopic fine dust.",
+    price: 149.99,
+    category: "Home & Living",
+    image: "https://images.unsplash.com/photo-1585773957597-290098495034?q=80&w=600&auto=format&fit=crop",
+    stock: 14,
+  },
+
+  // --- FITNESS ---
+  {
+    name: "Performance Athletic Trainers",
+    description: "Lightweight compound grid framework offering optimized stability matrices across floors.",
+    price: 115.00,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop",
+    stock: 15,
+  },
+  {
+    name: "Eco-Friendly Rubber Yoga Mat",
+    description: "High-density non-slip texturized compound natural tree extract tracking grid patterns.",
+    price: 49.99,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1592433967888-82559530739c?q=80&w=600&auto=format&fit=crop",
+    stock: 28,
+  },
+  {
+    name: "Adjustable Smart Dumbbell Set",
+    description: "Heavy steel fast interlocking weight plates swapping from 5 to 50 lbs seamlessly.",
+    price: 289.00,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1590486803838-7e57c6670535?q=80&w=600&auto=format&fit=crop",
+    stock: 6,
+  },
+  {
+    name: "High-Speed Training Jump Rope",
+    description: "Smooth industrial ball bearing spin axis inside lightweight secure aluminum handles.",
+    price: 19.99,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1594882645126-14020914d58d?q=80&w=600&auto=format&fit=crop",
+    stock: 80,
+  },
+  {
+    name: "Waterproof Hiking Backpack",
+    description: "55L massive multi-pocket configuration with active spine stress relief balance pads.",
+    price: 119.50,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1522163182402-834f875785f1?q=80&w=600&auto=format&fit=crop",
+    stock: 10,
+  },
+  {
+    name: "Professional Muscle Massage Gun",
+    description: "Quiet high-torque variable brushless motor targeting 5 depth configuration levels.",
+    price: 179.99,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1571731956684-f3b64eda976f?q=80&w=600&auto=format&fit=crop",
+    stock: 14,
+  },
+  {
+    name: "Heavy-Duty Resistance Loops",
+    description: "5 multi-elastic continuous anti-snap bands with double layer security stitching.",
+    price: 24.99,
+    category: "Fitness",
+    image: "https://images.unsplash.com/photo-1598289456812-588e3f4340d8?q=80&w=600&auto=format&fit=crop",
+    stock: 95,
   }
 ];
-
-export async function seedDatabase() {
-  try {
-    console.log("⏳ Connecting to database for seeding...");
-    await dbConnect();
-
-    // 1. Wipe existing items to avoid duplicates during dev updates
-    console.log("🧹 Clearing old products and categories...");
-    await Product.deleteMany({});
-    await Category.deleteMany({});
-
-    // 2. Insert Categories
-    console.log("🌱 Seeding Categories...");
-    const createdCategories = await Category.insertMany(sampleCategories);
-    console.log(`✅ Successfully seeded ${createdCategories.length} categories!`);
-
-    // Create a map to easily resolve Category ID by name strings
-    const categoryMap: Record<string, string> = {};
-    createdCategories.forEach((cat) => {
-      categoryMap[cat.name] = (cat._id as any).toString();
-    });
-
-    // 3. Map categories to products and insert
-    console.log("🌱 Seeding Products...");
-    const finalizedProducts = sampleProducts.map((prod) => {
-      const categoryId = categoryMap[prod.categoryName];
-      if (!categoryId) {
-        throw new Error(`Category mapping failed for name: ${prod.categoryName}`);
-      }
-
-      // Destructure out categoryName and add relational category field
-      const { categoryName, ...productData } = prod;
-      return {
-        ...productData,
-        category: categoryId
-      };
-    });
-
-    const createdProducts = await Product.insertMany(finalizedProducts);
-    console.log(`✅ Successfully seeded ${createdProducts.length} relational items into the database!`);
-    return { success: true, message: "Database seeded perfectly." };
-
-  } catch (error) {
-    console.error("❌ Seeding database aborted with an exception:", error);
-    throw error;
-  }
-}

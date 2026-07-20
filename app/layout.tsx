@@ -1,38 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
 
 export const metadata: Metadata = {
-  title: "E-Commerce App",
-  description: "Secure Shopping Solution",
+  title: "E-Commerce Platform",
+  description: "Next.js 5 Relational Product Checkout Framework",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50`}>
+    <html lang="en" className="h-full bg-gray-50 antialiased">
+      <body className="h-full font-sans text-gray-900 flex flex-col">
         <Providers>
           <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
+          <main className="flex-1">{children}</main>
         </Providers>
       </body>
     </html>

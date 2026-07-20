@@ -66,7 +66,7 @@ const ProductSchema = new Schema<IProduct>(
       count: { type: Number, default: 0 },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Performance compound full-text indices for high-speed catalog lookups

@@ -1,4 +1,3 @@
-// lib/auth.ts
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "@/lib/db";
@@ -19,23 +18,12 @@ export const authOptions: NextAuthOptions = {
         }
 
         await dbConnect();
-
         const user = await User.findOne({ email: credentials.email });
         if (!user) {
           throw new Error("No user found with this email");
         }
 
-        if (!user.isVerified) {
-          throw new Error(
-            "Please verify your email address before logging in.",
-          );
-        }
-
-        const isPasswordCorrect = await bcrypt.compare(
-          credentials.password,
-          user.password,
-        );
-
+        const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password);
         if (!isPasswordCorrect) {
           throw new Error("Incorrect password");
         }

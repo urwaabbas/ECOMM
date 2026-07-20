@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 interface ProductDetail {
@@ -24,11 +24,9 @@ interface ProductDetail {
 export default function ProductDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  // Unwrap params using React.use() to match Next.js 15+ async parameter mechanics
-  const resolvedParams = use(params);
-  const { id } = resolvedParams;
+  const { id } = params;
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +75,10 @@ export default function ProductDetailPage({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-xl p-6 inline-block max-w-md">
           <p className="font-semibold">{error || "Item was not found."}</p>
-          <Link href="/products" className="mt-4 inline-block text-sm font-bold text-indigo-600 underline">
+          <Link
+            href="/products"
+            className="mt-4 inline-block text-sm font-bold text-indigo-600 underline"
+          >
             Return to Store Catalog
           </Link>
         </div>
@@ -89,7 +90,9 @@ export default function ProductDetailPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb Navigation links */}
       <nav className="text-xs font-semibold text-gray-500 mb-8 uppercase tracking-wider">
-        <Link href="/products" className="hover:text-indigo-600 transition">Catalog</Link>
+        <Link href="/products" className="hover:text-indigo-600 transition">
+          Catalog
+        </Link>
         <span className="mx-2 text-gray-300">/</span>
         <span className="text-gray-900">{product.category.name}</span>
       </nav>
@@ -111,7 +114,9 @@ export default function ProductDetailPage({
                 key={i}
                 onClick={() => setActiveImage(img)}
                 className={`w-20 h-20 rounded-xl overflow-hidden bg-gray-50 border-2 transition ${
-                  activeImage === img ? "border-indigo-600 shadow-xs" : "border-gray-100 opacity-70 hover:opacity-100"
+                  activeImage === img
+                    ? "border-indigo-600 shadow-xs"
+                    : "border-gray-100 opacity-70 hover:opacity-100"
                 }`}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
@@ -137,13 +142,17 @@ export default function ProductDetailPage({
               ${product.discountPrice || product.price}
             </span>
             {product.discountPrice && (
-              <span className="text-sm text-gray-400 line-through">${product.price}</span>
+              <span className="text-sm text-gray-400 line-through">
+                ${product.price}
+              </span>
             )}
           </div>
 
           {/* Description Block */}
           <div className="space-y-2">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Product Details</h3>
+            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+              Product Details
+            </h3>
             <p className="text-sm text-gray-600 leading-relaxed">
               {product.description}
             </p>
@@ -151,7 +160,9 @@ export default function ProductDetailPage({
 
           {/* Availability Badge updates */}
           <div>
-            <span className="text-xs font-medium text-gray-500">Inventory Status: </span>
+            <span className="text-xs font-medium text-gray-500">
+              Inventory Status:{" "}
+            </span>
             {product.stock > 0 ? (
               <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                 In Stock ({product.stock} units left)
