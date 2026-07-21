@@ -16,6 +16,10 @@ const UserSchema = new Schema(
       type: String,
       required: [true, "Password is required"],
     },
+    passwordHash: {
+      type: String,
+      default: null,
+    },
     role: {
       type: String,
       default: "user",
@@ -33,7 +37,7 @@ const UserSchema = new Schema(
       default: null, // Expiry timestamp for the token
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User = models.User || model("User", UserSchema);

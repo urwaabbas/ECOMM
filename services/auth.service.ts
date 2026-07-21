@@ -28,6 +28,7 @@ export async function registerUser({ name, email, password }: RegisterInput) {
     name,
     email,
     password: hashedPassword,
+    passwordHash: hashedPassword,
     role: "user",
     isVerified: false,
     verificationToken,
@@ -52,4 +53,3 @@ export async function registerUser({ name, email, password }: RegisterInput) {
     verificationUrl,
   };
 }
-

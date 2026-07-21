@@ -9,12 +9,18 @@ export async function POST(request: Request) {
     const { name, email, password } = await request.json();
 
     if (!name || !email || !password) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Email already registered" },
+        { status: 400 },
+      );
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -23,13 +29,16 @@ export async function POST(request: Request) {
     const newUser = await User.create({
       name,
       email,
-      password, // fallbacks
-      passwordHash: hashedPassword, // legacy fallback support
+      password: hashedPassword,
+      passwordHash: hashedPassword,
       role: "user",
-      isVerified: true
+      isVerified: true,
     });
 
-    return NextResponse.json({ message: "Registered Successfully", userId: newUser._id }, { status: 201 });
+    return NextResponse.json(
+      { message: "Registered Successfully", userId: newUser._id },
+      { status: 201 },
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -18,12 +18,36 @@ export const authOptions: NextAuthOptions = {
         }
 
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email });
+        const normalizedEmail = credentials.email.toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
           throw new Error("No user found with this email");
         }
 
-        const isPasswordCorrect = await bcrypt.compare(credentials.password, user.password);
+        const storedPassword =
+          (user as any).password ?? (user as any).passwordHash ?? "";
+        let isPasswordCorrect = false;
+
+        if (
+          typeof storedPassword === "string" &&
+          storedPassword.startsWith("$2")
+        ) {
+          isPasswordCorrect = await bcrypt.compare(
+            credentials.password,
+            storedPassword,
+          );
+        } else if (typeof storedPassword === "string") {
+          isPasswordCorrect = credentials.password === storedPassword;
+
+          if (isPasswordCorrect) {
+            const hashedPassword = await bcrypt.hash(credentials.password, 10);
+            await User.updateOne(
+              { _id: (user as any)._id },
+              { password: hashedPassword, passwordHash: hashedPassword },
+            );
+          }
+        }
+
         if (!isPasswordCorrect) {
           throw new Error("Incorrect password");
         }
