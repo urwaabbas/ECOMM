@@ -9,7 +9,7 @@ export default function LandingPage() {
             Where Shopping Meets Style
           </span>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-gray-900 max-w-3xl leading-tight">
-            Where Style Meet Tradition — Hanli Bazar.
+            Where Style Meet Tradition — Haanli Bazaar.
           </h1>
           <p className="mt-6 text-base sm:text-lg text-gray-600 max-w-2xl leading-relaxed">
             Discover premium products designed for everyday comfort, modern
