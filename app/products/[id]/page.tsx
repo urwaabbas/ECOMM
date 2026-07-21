@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { formatPricePKR } from "@/lib/utilis";
+import ShoppingActions from "@/components/ShoppingActions";
 
 interface ProductDetail {
   _id: string;
@@ -179,17 +180,19 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Purchase CTA buttons (Pre-wired for Week 3 State integration) */}
-          <div className="pt-4 space-y-3">
-            <button
-              disabled={product.stock === 0}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl shadow-md transition disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Add to Shopping Cart
-            </button>
-            <button className="w-full bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 font-semibold py-3 rounded-xl shadow-xs transition">
-              Add to Wishlist
-            </button>
+          <div className="pt-4">
+            <ShoppingActions
+              product={{
+                _id: product._id,
+                title: product.title,
+                description: product.description,
+                price: product.price,
+                discountPrice: product.discountPrice,
+                images: product.images,
+                stock: product.stock,
+                category: product.category,
+              }}
+            />
           </div>
         </div>
       </div>

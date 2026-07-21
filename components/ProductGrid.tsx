@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image"; // ✅ Optimized for performance
+import { useShopping } from "@/components/ShoppingProvider";
 import { formatPricePKR } from "@/lib/utilis";
 
 interface Category {
@@ -25,6 +26,13 @@ interface Product {
 }
 
 export default function ProductGrid() {
+  const {
+    addToCart,
+    addToWishlist,
+    isInCart,
+    isInWishlist,
+    removeFromWishlist,
+  } = useShopping();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,10 +189,41 @@ export default function ProductGrid() {
                     </div>
                   </Link>
                 </div>
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 space-y-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => addToCart(p)}
+                      disabled={p.stock === 0 || isInCart(p._id)}
+                      className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                        p.stock === 0 || isInCart(p._id)
+                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                          : "bg-indigo-600 text-white hover:bg-indigo-700"
+                      }`}
+                    >
+                      {p.stock === 0
+                        ? "Out of Stock"
+                        : isInCart(p._id)
+                          ? "Added"
+                          : "Add to Cart"}
+                    </button>
+                    <button
+                      onClick={() =>
+                        isInWishlist(p._id)
+                          ? removeFromWishlist(p._id)
+                          : addToWishlist(p)
+                      }
+                      className={`w-11 rounded-md border text-lg transition ${
+                        isInWishlist(p._id)
+                          ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {isInWishlist(p._id) ? "♥" : "♡"}
+                    </button>
+                  </div>
                   <Link
                     href={`/products/${p._id}`}
-                    className="block w-full rounded-md bg-indigo-600 px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-indigo-700"
+                    className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
                   >
                     View Details
                   </Link>
