@@ -7,7 +7,7 @@ export const initialProducts = [
     description: "High-fidelity sound with dynamic active noise cancellation and 40-hour battery life.",
     price: 299.99,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
     stock: 12,
   },
   {
@@ -15,7 +15,7 @@ export const initialProducts = [
     description: "Tactile typing response with hot-swappable switches, wireless connectivity, and RGB lighting.",
     price: 129.50,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
     stock: 25,
   },
   {
@@ -23,7 +23,7 @@ export const initialProducts = [
     description: "34-inch curved display panel featuring 144Hz refresh rate and 1ms response latency.",
     price: 449.99,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3a56?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3a56?auto=format&fit=crop&w=600&q=80",
     stock: 7,
   },
   {
@@ -31,7 +31,7 @@ export const initialProducts = [
     description: "High-precision optical tracker built to minimize wrist fatigue over long operations.",
     price: 79.99,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1527864550417-7fd91051a465?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1527864550417-7fd91051a465?auto=format&fit=crop&w=600&q=80",
     stock: 40,
   },
   {
@@ -39,7 +39,7 @@ export const initialProducts = [
     description: "Pro-tier capture lens with autofocus matrices and optimized dual stereo audio microphones.",
     price: 99.00,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1588649036666-887556a3e5c9?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1588649036666-887556a3e5c9?auto=format&fit=crop&w=600&q=80",
     stock: 18,
   },
   {
@@ -47,7 +47,7 @@ export const initialProducts = [
     description: "IPX7 completely waterproof external casing with rich omnidirectional audio acoustics.",
     price: 59.99,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80",
     stock: 30,
   },
   {
@@ -55,7 +55,7 @@ export const initialProducts = [
     description: "Always-on cellular network connectivity tracking advanced health and vitals records metrics.",
     price: 249.99,
     category: "Electronics",
-    image: "https://images.unsplash.com/photo-1546868871-704132a5d082?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1546868871-704132a5d082?auto=format&fit=crop&w=600&q=80",
     stock: 15,
   },
 
@@ -65,7 +65,7 @@ export const initialProducts = [
     description: "Waterproof structural protection design built for daily travel and laptop storage.",
     price: 89.99,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
     stock: 8,
   },
   {
@@ -73,7 +73,7 @@ export const initialProducts = [
     description: "Timeless relaxed fit crafted using entirely organic heavyweight raw cotton materials.",
     price: 75.00,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?auto=format&fit=crop&w=600&q=80",
     stock: 14,
   },
   {
@@ -81,7 +81,7 @@ export const initialProducts = [
     description: "Ultralight breathable external dynamic shielding matrix optimized for outdoor hiking tracks.",
     price: 110.00,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1544923246-77be07ef3443?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1544923246-77be07ef3443?auto=format&fit=crop&w=600&q=80",
     stock: 22,
   },
   {
@@ -89,7 +89,7 @@ export const initialProducts = [
     description: "Luxurious brushed loopback inner fleece lining giving maximized cold weather retention.",
     price: 65.00,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80",
     stock: 35,
   },
   {
@@ -97,7 +97,7 @@ export const initialProducts = [
     description: "Flexible performance woven grid mesh providing optimal air cross ventilation framework.",
     price: 95.00,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
     stock: 19,
   },
   {
@@ -105,7 +105,7 @@ export const initialProducts = [
     description: "Shatterproof dynamic compound layout structure framing premium high UV safety coatings.",
     price: 45.00,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=600&q=80",
     stock: 50,
   },
   {
@@ -113,7 +113,7 @@ export const initialProducts = [
     description: "Full-grain waterproof treated hide construction with deep rubber lug traction grids.",
     price: 159.99,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1542280756-74b2f51e7b78?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1542280756-74b2f51e7b78?auto=format&fit=crop&w=600&q=80",
     stock: 11,
   },
   {
@@ -121,7 +121,7 @@ export const initialProducts = [
     description: "Wrinkle-resistant structured tailoring blend optimized for rapid corporate travel loops.",
     price: 135.50,
     category: "Apparel",
-    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80",
     stock: 16,
   },
 
@@ -131,7 +131,7 @@ export const initialProducts = [
     description: "Insulated hot/cold thermos feature tracking real-time fluid temp indicators safely.",
     price: 45.00,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
     stock: 40,
   },
   {
@@ -139,7 +139,7 @@ export const initialProducts = [
     description: "Ultrasonic cool mist vapor matrix incorporating 7 rotating chromatic light tracks.",
     price: 29.99,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad81a8?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1608571423902-eed4a5ad81a8?auto=format&fit=crop&w=600&q=80",
     stock: 60,
   },
   {
@@ -147,7 +147,7 @@ export const initialProducts = [
     description: "Contoured cervical posture corrective foam cooling matrix reducing sleeping neck strain.",
     price: 49.50,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1635398200631-5f257a02b123?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1635398200631-5f257a02b123?auto=format&fit=crop&w=600&q=80",
     stock: 24,
   },
   {
@@ -155,7 +155,7 @@ export const initialProducts = [
     description: "6 essential diamond-sharp hardening carbon core blades matching protective sleeves.",
     price: 89.99,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1593618998160-caf454c70e0d?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1593618998160-caf454c70e0d?auto=format&fit=crop&w=600&q=80",
     stock: 13,
   },
   {
@@ -163,7 +163,7 @@ export const initialProducts = [
     description: "Dimmable architectural workspace pole light containing custom USB fast charge hub arrays.",
     price: 39.99,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1534568863004-9488a0e0586e?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1534568863004-9488a0e0586e?auto=format&fit=crop&w=600&q=80",
     stock: 33,
   },
   {
@@ -171,7 +171,7 @@ export const initialProducts = [
     description: "Artisan cross-threaded natural blanket providing cozy comfort additions to modern spaces.",
     price: 34.99,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1616486703565-1801267910e4?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1616486703565-1801267910e4?auto=format&fit=crop&w=600&q=80",
     stock: 45,
   },
   {
@@ -179,7 +179,7 @@ export const initialProducts = [
     description: "16-piece complete organic matte finish structural plate layout setting four dynamic slots.",
     price: 115.00,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1584226427754-8e348939c0c1?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1584226427754-8e348939c0c1?auto=format&fit=crop&w=600&q=80",
     stock: 9,
   },
   {
@@ -187,7 +187,7 @@ export const initialProducts = [
     description: "True H13 high HEPA structural filtration layer trapping 99.97% microscopic fine dust.",
     price: 149.99,
     category: "Home & Living",
-    image: "https://images.unsplash.com/photo-1585773957597-290098495034?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1585773957597-290098495034?auto=format&fit=crop&w=600&q=80",
     stock: 14,
   },
 
@@ -197,7 +197,7 @@ export const initialProducts = [
     description: "Lightweight compound grid framework offering optimized stability matrices across floors.",
     price: 115.00,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=600&q=80",
     stock: 15,
   },
   {
@@ -205,7 +205,7 @@ export const initialProducts = [
     description: "High-density non-slip texturized compound natural tree extract tracking grid patterns.",
     price: 49.99,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1592433967888-82559530739c?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1592433967888-82559530739c?auto=format&fit=crop&w=600&q=80",
     stock: 28,
   },
   {
@@ -213,7 +213,7 @@ export const initialProducts = [
     description: "Heavy steel fast interlocking weight plates swapping from 5 to 50 lbs seamlessly.",
     price: 289.00,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1590486803838-7e57c6670535?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1590486803838-7e57c6670535?auto=format&fit=crop&w=600&q=80",
     stock: 6,
   },
   {
@@ -221,7 +221,7 @@ export const initialProducts = [
     description: "Smooth industrial ball bearing spin axis inside lightweight secure aluminum handles.",
     price: 19.99,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1594882645126-14020914d58d?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1594882645126-14020914d58d?auto=format&fit=crop&w=600&q=80",
     stock: 80,
   },
   {
@@ -229,7 +229,7 @@ export const initialProducts = [
     description: "55L massive multi-pocket configuration with active spine stress relief balance pads.",
     price: 119.50,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1522163182402-834f875785f1?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1522163182402-834f875785f1?auto=format&fit=crop&w=600&q=80",
     stock: 10,
   },
   {
@@ -237,7 +237,7 @@ export const initialProducts = [
     description: "Quiet high-torque variable brushless motor targeting 5 depth configuration levels.",
     price: 179.99,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1571731956684-f3b64eda976f?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1571731956684-f3b64eda976f?auto=format&fit=crop&w=600&q=80",
     stock: 14,
   },
   {
@@ -245,7 +245,7 @@ export const initialProducts = [
     description: "5 multi-elastic continuous anti-snap bands with double layer security stitching.",
     price: 24.99,
     category: "Fitness",
-    image: "https://images.unsplash.com/photo-1598289456812-588e3f4340d8?q=80&w=600&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1598289456812-588e3f4340d8?auto=format&fit=crop&w=600&q=80",
     stock: 95,
   }
 ];

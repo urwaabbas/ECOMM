@@ -1,4 +1,3 @@
-// models/User.ts (or your path to User schema)
 import mongoose, { Schema, model, models } from "mongoose";
 
 const UserSchema = new Schema(
@@ -12,29 +11,26 @@ const UserSchema = new Schema(
       unique: true,
       required: [true, "Email is required"],
     },
-    password: {
-      type: String,
-      required: [true, "Password is required"],
-    },
     passwordHash: {
       type: String,
-      default: null,
+      required: [true, "Password is required"], // ✅ single source of truth
     },
     role: {
       type: String,
+      enum: ["user", "admin"],
       default: "user",
     },
     isVerified: {
       type: Boolean,
-      default: false, // Users starts as unverified
+      default: false,
     },
     verificationToken: {
       type: String,
-      default: null, // Holds the active verification token
+      default: null,
     },
     verificationTokenExpires: {
       type: Date,
-      default: null, // Expiry timestamp for the token
+      default: null,
     },
   },
   { timestamps: true },

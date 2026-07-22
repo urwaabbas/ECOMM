@@ -18,38 +18,29 @@ export const authOptions: NextAuthOptions = {
         }
 
         await dbConnect();
+
         const normalizedEmail = credentials.email.toLowerCase();
         const user = await User.findOne({ email: normalizedEmail });
+
         if (!user) {
           throw new Error("No user found with this email");
         }
 
-        const storedPassword =
-          (user as any).password ?? (user as any).passwordHash ?? "";
-        let isPasswordCorrect = false;
+        // ✅ Always use passwordHash only (clean single field)
+        const isPasswordMatch = await bcrypt.compare(
+          credentials.password,
+          user.passwordHash,
+        );
 
-        if (
-          typeof storedPassword === "string" &&
-          storedPassword.startsWith("$2")
-        ) {
-          isPasswordCorrect = await bcrypt.compare(
-            credentials.password,
-            storedPassword,
-          );
-        } else if (typeof storedPassword === "string") {
-          isPasswordCorrect = credentials.password === storedPassword;
-
-          if (isPasswordCorrect) {
-            const hashedPassword = await bcrypt.hash(credentials.password, 10);
-            await User.updateOne(
-              { _id: (user as any)._id },
-              { password: hashedPassword, passwordHash: hashedPassword },
-            );
-          }
+        if (!isPasswordMatch) {
+          throw new Error("Invalid password");
         }
 
-        if (!isPasswordCorrect) {
-          throw new Error("Incorrect password");
+        // ✅ Block unverified users
+        if (!user.isVerified) {
+          throw new Error(
+            "Please verify your email before logging in. Check your inbox.",
+          );
         }
 
         return {
