@@ -1,78 +1,134 @@
 "use client";
 
-import React from "react";
+import Link from "next/link";
 import { useShopping } from "@/components/ShoppingProvider";
-import { formatPricePKR } from "@/lib/utilis";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+
+interface Product {
+  _id: string;
+  title: string;
+  description?: string;
+  price: number;
+  discountPrice?: number | null;
+  images: string[];
+  stock: number;
+  category?: any;
+}
 
 interface ShoppingActionsProps {
-  product: {
-    _id: string;
-    title: string;
-    description?: string;
-    price: number;
-    discountPrice?: number | null;
-    images?: string[];
-    stock: number;
-    category?: { name?: string; slug?: string };
-  };
+  product?: Product;
 }
 
 export default function ShoppingActions({ product }: ShoppingActionsProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const {
+    cartCount,
+    wishlistCount,
     addToCart,
     addToWishlist,
     removeFromWishlist,
     isInCart,
     isInWishlist,
-    cartCount,
-    wishlistCount,
+    loading,
   } = useShopping();
 
+  // ─── NAVBAR MODE: no product prop passed ───────────────────────
+  if (!product) {
+    return (
+      <div className="flex items-center gap-4">
+        <Link
+          href="/wishlist"
+          className="relative text-gray-600 hover:text-indigo-600 transition"
+        >
+          <span className="text-xl">♡</span>
+          {wishlistCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              {wishlistCount > 9 ? "9+" : wishlistCount}
+            </span>
+          )}
+        </Link>
+
+        <Link
+          href="/cart"
+          className="relative text-gray-600 hover:text-indigo-600 transition"
+        >
+          <span className="text-xl">🛒</span>
+          {cartCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+              {cartCount > 9 ? "9+" : cartCount}
+            </span>
+          )}
+        </Link>
+      </div>
+    );
+  }
+
+  // ─── PRODUCT DETAIL MODE: product prop passed ──────────────────
+  const handleAddToCart = () => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    addToCart(product);
+  };
+
+  const handleWishlistToggle = () => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    if (isInWishlist(product._id)) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
+  const inCart = isInCart(product._id);
+  const inWishlist = isInWishlist(product._id);
+  const outOfStock = product.stock === 0;
+
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
+      {/* Add to Cart Button */}
       <button
-        onClick={() => addToCart(product)}
-        disabled={product.stock === 0 || isInCart(product._id)}
-        className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
-      >
-        {product.stock === 0
-          ? "Out of Stock"
-          : isInCart(product._id)
-            ? "Added to Cart"
-            : "Add to Shopping Cart"}
-      </button>
-      <button
-        onClick={() =>
-          isInWishlist(product._id)
-            ? removeFromWishlist(product._id)
-            : addToWishlist(product)
-        }
-        className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-          isInWishlist(product._id)
-            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-            : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+        onClick={handleAddToCart}
+        disabled={outOfStock || inCart || loading}
+        className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition ${
+          outOfStock
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : inCart
+            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-not-allowed"
+            : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
-        {isInWishlist(product._id)
-          ? "♥ Saved to Wishlist"
-          : "♡ Add to Wishlist"}
+        {outOfStock ? "Out of Stock" : inCart ? "✓ Added to Cart" : "Add to Cart"}
       </button>
-      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
-        <div className="flex items-center justify-between">
-          <span>Cart items</span>
-          <span className="font-semibold text-gray-900">{cartCount}</span>
-        </div>
-        <div className="mt-2 flex items-center justify-between">
-          <span>Wishlist items</span>
-          <span className="font-semibold text-gray-900">{wishlistCount}</span>
-        </div>
-        <div className="mt-3 rounded-xl bg-white p-3 text-xs text-gray-500">
-          Estimated total:{" "}
-          <span className="font-semibold text-gray-900">
-            {formatPricePKR(product.discountPrice ?? product.price)}
-          </span>
-        </div>
-      </div>
+
+      {/* Wishlist Toggle Button */}
+      <button
+        onClick={handleWishlistToggle}
+        disabled={loading}
+        className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider border transition ${
+          inWishlist
+            ? "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+            : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        {inWishlist ? "♥ Remove from Wishlist" : "♡ Add to Wishlist"}
+      </button>
+
+      {/* Login prompt if not signed in */}
+      {!session?.user && (
+        <p className="text-xs text-center text-gray-400">
+          <Link href="/login" className="text-indigo-600 hover:underline font-semibold">
+            Sign in
+          </Link>{" "}
+          to save items to your cart and wishlist
+        </p>
+      )}
     </div>
   );
 }

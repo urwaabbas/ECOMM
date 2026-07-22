@@ -1,156 +1,82 @@
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import Wishlist from "@/models/Wishlist";
-import Product from "@/models/Product";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import dbConnect from "@/lib/db";
+import Wishlist from "@/models/Wishlist";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = (session.user as any)?.id ?? session.user?.email;
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "User session is missing an identifier" },
-        { status: 401 },
-      );
-    }
-
     await dbConnect();
-    const wishlist = await Wishlist.findOne({ user: userId }).lean();
-
-    return NextResponse.json({
-      success: true,
-      wishlist: wishlist ? wishlist : { items: [] },
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    const wishlist = await Wishlist.findOne({ user: session.user.id });
+    return NextResponse.json({ success: true, items: wishlist?.items || [] });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { productId } = body;
+    const { productId, title, price, discountPrice, image } = body;
 
-    if (!productId) {
-      return NextResponse.json(
-        { success: false, error: "Product ID is required" },
-        { status: 400 },
-      );
+    if (!productId || !title || price === undefined) {
+      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
     await dbConnect();
-    const productDocument = await Product.findById(productId).lean();
-    const product = productDocument as any;
-    if (!product) {
-      return NextResponse.json(
-        { success: false, error: "Product not found" },
-        { status: 404 },
-      );
-    }
-
-    const userId = (session.user as any)?.id ?? session.user?.email;
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "User session is missing an identifier" },
-        { status: 401 },
-      );
-    }
-
-    let wishlist = await Wishlist.findOne({ user: userId });
+    let wishlist = await Wishlist.findOne({ user: session.user.id });
 
     if (!wishlist) {
-      wishlist = new Wishlist({ user: userId, items: [] });
-    }
-
-    const exists = wishlist.items.some(
-      (item: any) => item.productId.toString() === productId,
-    );
-    if (!exists) {
-      wishlist.items.push({
-        productId,
-        title: product.title,
-        price: Number(product.price ?? 0),
-        discountPrice: product.discountPrice ?? null,
-        image:
-          Array.isArray(product.images) && product.images[0]
-            ? product.images[0]
-            : "",
+      wishlist = await Wishlist.create({
+        user: session.user.id,
+        items: [{ productId, title, price, discountPrice, image }],
       });
+    } else {
+      const exists = wishlist.items.some(
+        (item: any) => item.productId.toString() === productId
+      );
+      if (!exists) {
+        wishlist.items.push({ productId, title, price, discountPrice, image });
+        await wishlist.save();
+      }
     }
 
-    await wishlist.save();
-    return NextResponse.json({ success: true, wishlist });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: true, items: wishlist.items });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 },
-      );
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const productId = searchParams.get("productId");
-
-    if (!productId) {
-      return NextResponse.json(
-        { success: false, error: "Product ID is required" },
-        { status: 400 },
-      );
-    }
-
-    const userId = (session.user as any)?.id ?? session.user?.email;
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "User session is missing an identifier" },
-        { status: 401 },
-      );
-    }
-
+    const { productId } = await request.json();
     await dbConnect();
-    const wishlist = await Wishlist.findOne({ user: userId });
+    const wishlist = await Wishlist.findOne({ user: session.user.id });
     if (!wishlist) {
-      return NextResponse.json({ success: true, wishlist: { items: [] } });
+      return NextResponse.json({ success: false, error: "Wishlist not found" }, { status: 404 });
     }
 
     wishlist.items = wishlist.items.filter(
-      (item: any) => item.productId.toString() !== productId,
+      (item: any) => item.productId.toString() !== productId
     );
     await wishlist.save();
-    return NextResponse.json({ success: true, wishlist });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 },
-    );
+
+    return NextResponse.json({ success: true, items: wishlist.items });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
   }
 }

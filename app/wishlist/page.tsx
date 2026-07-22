@@ -1,90 +1,136 @@
 "use client";
 
-import Link from "next/link";
 import { useShopping } from "@/components/ShoppingProvider";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import Image from "next/image";
 import { formatPricePKR } from "@/lib/utilis";
 
 export default function WishlistPage() {
-  const { wishlistItems, removeFromWishlist, moveToCart } = useShopping();
+  const { data: session } = useSession();
+  const { wishlistItems, removeFromWishlist, addToCart, isInCart, loading } = useShopping();
+
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          Please sign in to view your wishlist
+        </h2>
+        <Link
+          href="/login"
+          className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+        >
+          Sign In
+        </Link>
+      </div>
+    );
+  }
+
+  if (wishlistItems.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="text-6xl mb-4">♡</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Your wishlist is empty</h2>
+        <p className="text-gray-500 mb-6">Save products you love for later</p>
+        <Link
+          href="/"
+          className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+        >
+          Explore Products
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-600">
-              Wishlist
-            </p>
-            <h1 className="mt-2 text-3xl font-black text-gray-900">
-              Saved for later
-            </h1>
-          </div>
-          <Link
-            href="/products"
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-          >
-            Discover products
-          </Link>
-        </div>
+      <div className="max-w-5xl mx-auto px-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">
+          My Wishlist{" "}
+          <span className="text-gray-400 text-lg font-normal">
+            ({wishlistItems.length} items)
+          </span>
+        </h1>
 
-        {wishlistItems.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Your wishlist is empty
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Tap the heart on any product to save it here.
-            </p>
-            <Link
-              href="/products"
-              className="mt-6 inline-flex rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white"
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {wishlistItems.map((item) => (
+            <div
+              key={item.productId}
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
             >
-              Browse products
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {wishlistItems.map((item) => (
-              <div
-                key={item._id}
-                className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="h-48 rounded-2xl bg-gray-100">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="h-full w-full rounded-2xl object-cover"
-                    />
-                  ) : null}
+              {/* Product Image */}
+              <div className="relative aspect-square w-full bg-gray-100">
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl text-gray-300">
+                    📦
+                  </div>
+                )}
+                <button
+                  onClick={() => removeFromWishlist(item.productId)}
+                  disabled={loading}
+                  className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center text-red-500 hover:bg-red-50 transition"
+                >
+                  ♥
+                </button>
+              </div>
+
+              {/* Product Info */}
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-800 line-clamp-1">
+                  {item.title}
+                </h3>
+
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-indigo-600 font-bold">
+                    {formatPricePKR(item.discountPrice || item.price)}
+                  </span>
+                  {item.discountPrice && (
+                    <span className="text-xs text-gray-400 line-through">
+                      {formatPricePKR(item.price)}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-4">
-                  <h3 className="font-semibold text-gray-900">{item.title}</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {item.category?.name || "Product"}
-                  </p>
-                  <p className="mt-3 font-semibold text-gray-900">
-                    {formatPricePKR(item.discountPrice ?? item.price)}
-                  </p>
-                </div>
-                <div className="mt-5 flex gap-3">
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-4">
                   <button
-                    onClick={() => moveToCart(item)}
-                    className="flex-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white"
+                    onClick={() =>
+                      addToCart({
+                        _id: item.productId,
+                        title: item.title,
+                        price: item.price,
+                        discountPrice: item.discountPrice,
+                        images: [item.image],
+                      })
+                    }
+                    disabled={isInCart(item.productId) || loading}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                      isInCart(item.productId)
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-indigo-600 text-white hover:bg-indigo-700"
+                    }`}
                   >
-                    Add to cart
+                    {isInCart(item.productId) ? "✓ In Cart" : "Add to Cart"}
                   </button>
                   <button
-                    onClick={() => removeFromWishlist(item._id)}
-                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700"
+                    onClick={() => removeFromWishlist(item.productId)}
+                    disabled={loading}
+                    className="px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition text-sm"
                   >
                     Remove
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

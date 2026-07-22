@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
-import { initialProducts } from "@/lib/seed";
 import { getProductImageUrl } from "@/lib/product-image";
+import "@/models/Category";
 
 function normalizeProduct(product: any) {
   const imageCandidates = [
@@ -51,7 +51,8 @@ export async function GET(request: Request) {
     const sort = searchParams.get("sort");
     const search = searchParams.get("search")?.trim();
 
-    let products: any[] = [];
+    await dbConnect();
+    console.log("✅ DB connected, fetching from MongoDB");
 
     const sortMapping: Record<string, 1 | -1> = {
       price_asc: 1,
@@ -60,103 +61,48 @@ export async function GET(request: Request) {
       "high-to-low": -1,
     };
 
-    try {
-      await dbConnect();
+    let queryFilter: Record<string, any> = {};
 
-      let queryFilter: Record<string, any> = {};
-      let useCategoryFilterById = false;
-      if (category && category !== "All") {
-        const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-        if (isObjectId) {
-          queryFilter.category = category;
-          useCategoryFilterById = true;
-        }
+    if (category && category !== "All") {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+      if (isObjectId) {
+        queryFilter.category = category;
       }
+    }
 
-      if (search) {
-        queryFilter.$or = [
-          { title: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
-        ];
-      }
+    if (search) {
+      queryFilter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
 
-      let productCursor = Product.find(queryFilter).populate(
-        "category",
-        "name slug",
+    let productCursor = Product.find(queryFilter).populate(
+      "category",
+      "name slug",
+    );
+
+    const sortDirection = sortMapping[sort ?? ""];
+    if (sortDirection) {
+      productCursor = productCursor.sort({ price: sortDirection });
+    }
+
+    const fetchedProducts = await productCursor.lean().exec();
+    let products = fetchedProducts.map(normalizeProduct);
+
+    // Handle non-ObjectId category filter (by name or slug)
+    if (category && category !== "All" && !/^[0-9a-fA-F]{24}$/.test(category)) {
+      const normalizedCategory = category.toLowerCase();
+      products = products.filter(
+        (p) =>
+          p.category?.slug?.toLowerCase() === normalizedCategory ||
+          p.category?.name?.toLowerCase() === normalizedCategory,
       );
-
-      const sortDirection = sortMapping[sort ?? ""];
-      if (sortDirection) {
-        productCursor = productCursor.sort({ price: sortDirection });
-      }
-
-      const fetchedProducts = await productCursor.lean().exec();
-      products = fetchedProducts.map(normalizeProduct);
-
-      if (category && category !== "All" && !useCategoryFilterById) {
-        const normalizedCategory = category.toLowerCase();
-        products = products.filter(
-          (p) =>
-            p.category?.slug?.toLowerCase() === normalizedCategory ||
-            p.category?.name?.toLowerCase() === normalizedCategory,
-        );
-      }
-    } catch (dbError) {
-      console.warn("Falling back to seeded product data:", dbError);
-      // Normalize seeded products and ensure categories have usable _id (use slug)
-      products = initialProducts.map((product: any, i: number) => {
-        const catName =
-          typeof product.category === "string"
-            ? product.category
-            : (product.category?.name ?? "uncategorized");
-        const slug =
-          (product.category && product.category.slug) ||
-          String(catName).toLowerCase().replace(/\s+/g, "-");
-
-        const seeded = {
-          ...product,
-          _id: product._id?.toString?.() ?? `seed-${i}`,
-          title: product.title ?? product.name,
-          name: product.name,
-          images: Array.isArray(product.images)
-            ? product.images
-            : product.image
-              ? [product.image]
-              : [],
-          image: product.image,
-          category: {
-            _id: slug,
-            name: catName,
-            slug,
-          },
-        };
-
-        return normalizeProduct(seeded);
-      });
-
-      // Apply server-side filtering on fallback data as well
-      if (category && category !== "All") {
-        products = products.filter(
-          (p) => p.category?._id === category || p.category?.name === category,
-        );
-      }
-
-      if (search) {
-        const s = search.toLowerCase();
-        products = products.filter((p) =>
-          (p.title + " " + p.description).toLowerCase().includes(s),
-        );
-      }
-
-      if (sortMapping[sort ?? ""] === 1) {
-        products = products.sort((a, b) => a.price - b.price);
-      } else if (sortMapping[sort ?? ""] === -1) {
-        products = products.sort((a, b) => b.price - a.price);
-      }
     }
 
     return NextResponse.json({ success: true, products }, { status: 200 });
   } catch (error: any) {
+    console.error("❌ Products API error:", error.message);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 },

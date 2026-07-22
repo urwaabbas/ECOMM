@@ -1,145 +1,158 @@
 "use client";
 
-import Link from "next/link";
 import { useShopping } from "@/components/ShoppingProvider";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import Image from "next/image";
 import { formatPricePKR } from "@/lib/utilis";
 
 export default function CartPage() {
-  const { cartItems, cartSubtotal, removeFromCart, updateQuantity, clearCart } =
-    useShopping();
+  const { data: session } = useSession();
+  const { cartItems, removeFromCart, updateCartQuantity, clearCart, loading } = useShopping();
+
+  const subtotal = cartItems.reduce((sum, item) => {
+    return sum + (item.discountPrice || item.price) * item.quantity;
+  }, 0);
+
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Please sign in to view your cart</h2>
+        <Link href="/login" className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+          Sign In
+        </Link>
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="text-6xl mb-4">🛒</div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
+        <p className="text-gray-500 mb-6">Add some products to get started</p>
+        <Link href="/" className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+          Continue Shopping
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-600">
-              Shopping Cart
-            </p>
-            <h1 className="mt-2 text-3xl font-black text-gray-900">
-              Your selected items
-            </h1>
-          </div>
-          <Link
-            href="/products"
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
-          >
-            Continue shopping
-          </Link>
-        </div>
+      <div className="max-w-5xl mx-auto px-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
 
-        {cartItems.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Your cart is empty
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Add a few products to begin your checkout experience.
-            </p>
-            <Link
-              href="/products"
-              className="mt-6 inline-flex rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white"
-            >
-              Browse products
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-8 lg:grid-cols-[1.6fr_0.8fr]">
-            <div className="space-y-4">
-              {cartItems.map((item) => (
-                <div
-                  key={item._id}
-                  className="flex flex-col gap-4 rounded-3xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center"
-                >
-                  <div className="h-24 w-full shrink-0 rounded-2xl bg-gray-100 sm:w-24">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="h-full w-full rounded-2xl object-cover"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {item.category?.name || "Product"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => removeFromCart(item._id)}
-                        className="text-sm font-semibold text-red-600"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            updateQuantity(item._id, item.quantity - 1)
-                          }
-                          className="h-8 w-8 rounded-full border border-gray-300 text-lg font-semibold"
-                        >
-                          -
-                        </button>
-                        <span className="min-w-8 text-center font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantity(item._id, item.quantity + 1)
-                          }
-                          className="h-8 w-8 rounded-full border border-gray-300 text-lg font-semibold"
-                        >
-                          +
-                        </button>
-                      </div>
-                      <p className="font-semibold text-gray-900">
-                        {formatPricePKR(
-                          (item.discountPrice ?? item.price) * item.quantity,
-                        )}
-                      </p>
-                    </div>
-                  </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+
+          {/* Cart Items */}
+          <div className="flex-1 space-y-4">
+            {cartItems.map((item) => (
+              <div
+                key={item.productId}
+                className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 items-center"
+              >
+                {/* Product Image */}
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-100">
+                  {item.image ? (
+                    <Image src={item.image} alt={item.title} fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">📦</div>
+                  )}
                 </div>
-              ))}
-            </div>
 
-            <aside className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Order summary
-              </h2>
-              <div className="mt-4 space-y-3 text-sm text-gray-600">
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-800 truncate">{item.title}</h3>
+                  <p className="text-indigo-600 font-bold mt-1">
+                    {formatPricePKR(item.discountPrice || item.price)}
+                  </p>
+                </div>
+
+                {/* Quantity Controls */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
+                    disabled={item.quantity <= 1 || loading}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-semibold text-gray-800">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+                    disabled={loading}
+                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Item Total + Remove */}
+                <div className="text-right shrink-0">
+                  <p className="font-bold text-gray-900">
+                    {formatPricePKR((item.discountPrice || item.price) * item.quantity)}
+                  </p>
+                  <button
+                    onClick={() => removeFromCart(item.productId)}
+                    disabled={loading}
+                    className="text-xs text-red-500 hover:text-red-700 mt-1"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              onClick={clearCart}
+              disabled={loading}
+              className="text-sm text-gray-500 hover:text-red-600 underline"
+            >
+              Clear entire cart
+            </button>
+          </div>
+
+          {/* Order Summary */}
+          <div className="w-full lg:w-80 shrink-0">
+            <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
+
+              <div className="space-y-3 text-sm text-gray-700">
                 <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatPricePKR(cartSubtotal)}</span>
+                  <span>
+                    Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)
+                  </span>
+                  <span className="font-semibold">{formatPricePKR(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>Free</span>
+                  <span className="text-green-600 font-semibold">Free</span>
                 </div>
-                <div className="flex justify-between border-t border-gray-200 pt-3 font-semibold text-gray-900">
+                <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-gray-900 text-base">
                   <span>Total</span>
-                  <span>{formatPricePKR(cartSubtotal)}</span>
+                  <span>{formatPricePKR(subtotal)}</span>
                 </div>
               </div>
-              <button className="mt-6 w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
-                Proceed to Checkout
-              </button>
-              <button
-                onClick={clearCart}
-                className="mt-3 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700"
+
+              <Link
+                href="/checkout"
+                className="mt-6 block w-full bg-indigo-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
               >
-                Clear Cart
-              </button>
-            </aside>
+                Proceed to Checkout
+              </Link>
+              <Link
+                href="/"
+                className="mt-3 block w-full text-center text-sm text-gray-500 hover:text-indigo-600"
+              >
+                Continue Shopping
+              </Link>
+            </div>
           </div>
-        )}
+
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image"; // ✅ Optimized for performance
+import Image from "next/image";
 import { useShopping } from "@/components/ShoppingProvider";
 import { formatPricePKR } from "@/lib/utilis";
 
@@ -33,6 +33,7 @@ export default function ProductGrid() {
     isInWishlist,
     removeFromWishlist,
   } = useShopping();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,16 +79,22 @@ export default function ProductGrid() {
     fetchFilteredProducts();
   }, [debouncedSearch, selectedCategory, sort]);
 
+  // ✅ Normalize product ID to plain string before any shopping action
+  const normalizeProduct = (p: Product) => ({
+    ...p,
+    _id: p._id.toString(),
+    images: p.images,
+  });
+
+  const pid = (p: Product) => p._id.toString();
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Controls */}
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
-            <label
-              htmlFor="search"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
+            <label htmlFor="search" className="block text-sm font-semibold text-gray-700 mb-2">
               Search Products
             </label>
             <input
@@ -100,10 +107,7 @@ export default function ProductGrid() {
             />
           </div>
           <div>
-            <label
-              htmlFor="sort"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
+            <label htmlFor="sort" className="block text-sm font-semibold text-gray-700 mb-2">
               Sort by price
             </label>
             <select
@@ -121,6 +125,7 @@ export default function ProductGrid() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar Categories */}
         <aside className="w-full lg:w-64 bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
@@ -130,7 +135,6 @@ export default function ProductGrid() {
               Filter products by category for faster browsing.
             </p>
           </div>
-
           <div className="space-y-2">
             <button
               onClick={() => setSelectedCategory("")}
@@ -156,7 +160,6 @@ export default function ProductGrid() {
               </button>
             ))}
           </div>
-
           {categories.length === 0 && (
             <p className="mt-4 text-sm text-gray-500">
               Categories are loading or unavailable.
@@ -164,73 +167,98 @@ export default function ProductGrid() {
           )}
         </aside>
 
+        {/* Product Grid */}
         <main className="flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {products.map((p) => (
-              <div
-                key={p._id}
-                className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
-              >
-                <div>
-                  <Link href={`/products/${p._id}`} className="block">
-                    <div className="relative aspect-square w-full">
-                      <Image
-                        src={p.images[0]}
-                        alt={p.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-800">{p.title}</h3>
-                      <p className="text-gray-900 font-semibold mt-2">
-                        {formatPricePKR(p.discountPrice || p.price)}
-                      </p>
-                    </div>
-                  </Link>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
+                  <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
                 </div>
-                <div className="px-4 pb-4 space-y-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => addToCart(p)}
-                      disabled={p.stock === 0 || isInCart(p._id)}
-                      className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
-                        p.stock === 0 || isInCart(p._id)
-                          ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                          : "bg-indigo-600 text-white hover:bg-indigo-700"
-                      }`}
-                    >
-                      {p.stock === 0
-                        ? "Out of Stock"
-                        : isInCart(p._id)
-                          ? "Added"
-                          : "Add to Cart"}
-                    </button>
-                    <button
-                      onClick={() =>
-                        isInWishlist(p._id)
-                          ? removeFromWishlist(p._id)
-                          : addToWishlist(p)
-                      }
-                      className={`w-11 rounded-md border text-lg transition ${
-                        isInWishlist(p._id)
-                          ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {isInWishlist(p._id) ? "♥" : "♡"}
-                    </button>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              <p className="text-gray-500">No products found matching your filters.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {products.map((p) => (
+                <div
+                  key={pid(p)}
+                  className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
+                >
+                  <div>
+                    <Link href={`/products/${pid(p)}`} className="block">
+                      <div className="relative aspect-square w-full">
+                        <Image
+                          src={p.images[0]}
+                          alt={p.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
+                          {p.category?.name}
+                        </p>
+                        <h3 className="font-bold text-gray-800 mt-1">{p.title}</h3>
+                        <p className="text-gray-900 font-semibold mt-2">
+                          {formatPricePKR(p.discountPrice || p.price)}
+                        </p>
+                      </div>
+                    </Link>
                   </div>
-                  <Link
-                    href={`/products/${p._id}`}
-                    className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
-                  >
-                    View Details
-                  </Link>
+
+                  <div className="px-4 pb-4 space-y-2">
+                    <div className="flex gap-2">
+                      {/* ✅ Add to Cart — normalized product */}
+                      <button
+                        onClick={() => addToCart(normalizeProduct(p))}
+                        disabled={p.stock === 0 || isInCart(pid(p))}
+                        className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                          p.stock === 0 || isInCart(pid(p))
+                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                            : "bg-indigo-600 text-white hover:bg-indigo-700"
+                        }`}
+                      >
+                        {p.stock === 0
+                          ? "Out of Stock"
+                          : isInCart(pid(p))
+                          ? "✓ Added"
+                          : "Add to Cart"}
+                      </button>
+
+                      {/* ✅ Wishlist toggle — normalized ID */}
+                      <button
+                        onClick={() =>
+                          isInWishlist(pid(p))
+                            ? removeFromWishlist(pid(p))
+                            : addToWishlist(normalizeProduct(p))
+                        }
+                        className={`w-11 rounded-md border text-lg transition ${
+                          isInWishlist(pid(p))
+                            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {isInWishlist(pid(p)) ? "♥" : "♡"}
+                      </button>
+                    </div>
+
+                    <Link
+                      href={`/products/${pid(p)}`}
+                      className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
+                    >
+                      View Details
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>
