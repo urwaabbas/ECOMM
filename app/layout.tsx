@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 import ShoppingProvider from "@/components/ShoppingProvider";
-
+import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "E-Commerce Platform",
   description: "Next.js 5 Relational Product Checkout Framework",
@@ -21,6 +21,7 @@ export default function RootLayout({
           <ShoppingProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
+            <Footer />
           </ShoppingProvider>
         </Providers>
       </body>
