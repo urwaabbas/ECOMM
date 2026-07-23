@@ -28,8 +28,12 @@ const OrderSchema = new Schema(
     total: { type: Number, required: true, default: 0 },
     status: {
       type: String,
-      enum: ["pending", "processing", "completed", "cancelled"],
+      enum: ["pending","paid" , "processing", "completed", "cancelled"],
       default: "pending",
+    },
+    productId : {
+      type : String,
+      default : null,
     },
   },
   { timestamps: true },
