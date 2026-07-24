@@ -5,16 +5,11 @@ import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Get raw body and signature
+    
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
 
@@ -37,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Get userId from metadata
+      
       const userId = session.metadata?.userId;
 
       if (!userId) {
@@ -60,7 +55,7 @@ export async function POST(request: NextRequest) {
         cart.items = [];
         await cart.save();
 
-        console.log("✅ Order saved for user:", userId);
+        console.log(" Order saved for user:", userId);
       }
     }
 
