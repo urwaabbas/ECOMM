@@ -46,12 +46,38 @@ export function useShopping() {
   return ctx;
 }
 
+// localStorage helpers
+const getLocalCart = (): CartItem[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("guest_cart") || "[]");
+  } catch { return []; }
+};
+
+const saveLocalCart = (items: CartItem[]) => {
+  localStorage.setItem("guest_cart", JSON.stringify(items));
+};
+
+const getLocalWishlist = (): WishlistItem[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem("guest_wishlist") || "[]");
+  } catch { return []; }
+};
+
+const saveLocalWishlist = (items: WishlistItem[]) => {
+  localStorage.setItem("guest_wishlist", JSON.stringify(items));
+};
+
 export default function ShoppingProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const isLoggedIn = !!session?.user;
+
+  // Fetch cart from API (logged in users)
   const refreshCart = useCallback(async () => {
     if (!session?.user) return;
     try {
@@ -63,6 +89,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   }, [session]);
 
+  // Fetch wishlist from API (logged in users)
   const refreshWishlist = useCallback(async () => {
     if (!session?.user) return;
     try {
@@ -74,18 +101,74 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   }, [session]);
 
+  // When session changes (login/logout)
   useEffect(() => {
     if (session?.user) {
+      // User just logged in → merge localStorage with DB
+      const localCart = getLocalCart();
+      const localWishlist = getLocalWishlist();
+
+      // If guest had items → sync them to DB
+      if (localCart.length > 0) {
+        localCart.forEach(async (item) => {
+          await fetch("/api/cart", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(item),
+          });
+        });
+        localStorage.removeItem("guest_cart");
+      }
+
+      if (localWishlist.length > 0) {
+        localWishlist.forEach(async (item) => {
+          await fetch("/api/wishlist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(item),
+          });
+        });
+        localStorage.removeItem("guest_wishlist");
+      }
+
       refreshCart();
       refreshWishlist();
     } else {
-      setCartItems([]);
-      setWishlistItems([]);
+      // Not logged in → load from localStorage
+      setCartItems(getLocalCart());
+      setWishlistItems(getLocalWishlist());
     }
   }, [session, refreshCart, refreshWishlist]);
 
+  // Add to cart
   const addToCart = async (product: any) => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      // Guest → save to localStorage
+      const current = getLocalCart();
+      const exists = current.find(i => i.productId === product._id);
+      let updated;
+      if (exists) {
+        updated = current.map(i =>
+          i.productId === product._id
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
+        );
+      } else {
+        updated = [...current, {
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          discountPrice: product.discountPrice || null,
+          image: product.images?.[0] || "",
+          quantity: 1,
+        }];
+      }
+      saveLocalCart(updated);
+      setCartItems(updated);
+      return;
+    }
+
+    // Logged in → save to DB
     setLoading(true);
     try {
       const res = await fetch("/api/cart", {
@@ -109,8 +192,14 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
+  // Remove from cart
   const removeFromCart = async (productId: string) => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      const updated = getLocalCart().filter(i => i.productId !== productId);
+      saveLocalCart(updated);
+      setCartItems(updated);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/cart", {
@@ -127,8 +216,16 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
+  // Update quantity
   const updateCartQuantity = async (productId: string, quantity: number) => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      const updated = getLocalCart().map(i =>
+        i.productId === productId ? { ...i, quantity } : i
+      );
+      saveLocalCart(updated);
+      setCartItems(updated);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/cart", {
@@ -145,15 +242,31 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
+  // Add to wishlist
   const addToWishlist = async (product: any) => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      const current = getLocalWishlist();
+      const exists = current.find(i => i.productId === product._id);
+      if (!exists) {
+        const updated = [...current, {
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          discountPrice: product.discountPrice || null,
+          image: product.images?.[0] || "",
+        }];
+        saveLocalWishlist(updated);
+        setWishlistItems(updated);
+      }
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/wishlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-  productId: product._id?.toString() || product.id?.toString() || "",
+          productId: product._id?.toString() || "",
           title: product.title,
           price: product.price,
           discountPrice: product.discountPrice || null,
@@ -169,8 +282,14 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
+  // Remove from wishlist
   const removeFromWishlist = async (productId: string) => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      const updated = getLocalWishlist().filter(i => i.productId !== productId);
+      saveLocalWishlist(updated);
+      setWishlistItems(updated);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/wishlist", {
@@ -187,8 +306,14 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
+  // Clear cart
   const clearCart = async () => {
-    if (!session?.user) return;
+    if (!isLoggedIn) {
+      localStorage.removeItem("guest_cart");
+      setCartItems([]);
+      return;
+    }
+    setCartItems([]);
     setLoading(true);
     try {
       const res = await fetch("/api/cart", {
@@ -206,31 +331,29 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
   };
 
   const isInCart = (productId: string) =>
-    cartItems.some((item) => item.productId === productId);
+    cartItems.some(item => item.productId === productId);
 
   const isInWishlist = (productId: string) =>
-    wishlistItems.some((item) => item.productId === productId);
+    wishlistItems.some(item => item.productId === productId);
 
   return (
-    <ShoppingContext.Provider
-      value={{
-        cartItems,
-        wishlistItems,
-        cartCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-        wishlistCount: wishlistItems.length,
-        addToCart,
-        removeFromCart,
-        updateCartQuantity,
-        addToWishlist,
-        removeFromWishlist,
-        isInCart,
-        isInWishlist,
-        clearCart,
-        refreshCart,
-        refreshWishlist,
-        loading,
-      }}
-    >
+    <ShoppingContext.Provider value={{
+      cartItems,
+      wishlistItems,
+      cartCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
+      wishlistCount: wishlistItems.length,
+      addToCart,
+      removeFromCart,
+      updateCartQuantity,
+      addToWishlist,
+      removeFromWishlist,
+      isInCart,
+      isInWishlist,
+      clearCart,
+      refreshCart,
+      refreshWishlist,
+      loading,
+    }}>
       {children}
     </ShoppingContext.Provider>
   );

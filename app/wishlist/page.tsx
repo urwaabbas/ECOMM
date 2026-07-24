@@ -8,20 +8,27 @@ import { formatPricePKR } from "@/lib/utilis";
 
 export default function WishlistPage() {
   const { data: session } = useSession();
-  const { wishlistItems, removeFromWishlist, addToCart, isInCart, loading } = useShopping();
+  const { wishlistItems, removeFromWishlist, addToCart, isInCart, loading } =
+    useShopping();
 
-  if (!session?.user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          Please sign in to view your wishlist
-        </h2>
+  <h1 className="text-2xl font-bold text-gray-900 mb-8">
+    My Wishlist{" "}
+    <span className="text-gray-400 text-lg font-normal">
+      ({wishlistItems.length} items)
+    </span>
+  </h1>;
+
+  {
+    !session?.user && (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 mb-6 text-sm text-yellow-800">
+        You are browsing as a guest.{" "}
         <Link
           href="/login"
-          className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+          className="font-semibold underline hover:text-yellow-900"
         >
-          Sign In
-        </Link>
+          Login
+        </Link>{" "}
+        to save your wishlist permanently.
       </div>
     );
   }
@@ -30,7 +37,9 @@ export default function WishlistPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="text-6xl mb-4">♡</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Your wishlist is empty</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">
+          Your wishlist is empty
+        </h2>
         <p className="text-gray-500 mb-6">Save products you love for later</p>
         <Link
           href="/"

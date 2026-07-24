@@ -8,30 +8,27 @@ import { formatPricePKR } from "@/lib/utilis";
 
 export default function CartPage() {
   const { data: session } = useSession();
-  const { cartItems, removeFromCart, updateCartQuantity, clearCart, loading } = useShopping();
+  const { cartItems, removeFromCart, updateCartQuantity, clearCart, loading } =
+    useShopping();
 
   const subtotal = cartItems.reduce((sum, item) => {
     return sum + (item.discountPrice || item.price) * item.quantity;
   }, 0);
 
-  if (!session?.user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Please sign in to view your cart</h2>
-        <Link href="/login" className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
-          Sign In
-        </Link>
-      </div>
-    );
-  }
+
 
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="text-6xl mb-4">🛒</div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">
+          Your cart is empty
+        </h2>
         <p className="text-gray-500 mb-6">Add some products to get started</p>
-        <Link href="/" className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+        <Link
+          href="/"
+          className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+        >
           Continue Shopping
         </Link>
       </div>
@@ -44,7 +41,6 @@ export default function CartPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
 
         <div className="flex flex-col lg:flex-row gap-8">
-
           {/* Cart Items */}
           <div className="flex-1 space-y-4">
             {cartItems.map((item) => (
@@ -52,27 +48,38 @@ export default function CartPage() {
                 key={item.productId}
                 className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 items-center"
               >
-                {/* Product Image */}
+                
                 <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                   {item.image ? (
-                    <Image src={item.image} alt={item.title} fill className="object-cover" />
+                    <Image
+                      src={item.image}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">📦</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
+                      📦
+                    </div>
                   )}
                 </div>
 
-                {/* Product Info */}
+                
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-800 truncate">{item.title}</h3>
+                  <h3 className="font-semibold text-gray-800 truncate">
+                    {item.title}
+                  </h3>
                   <p className="text-indigo-600 font-bold mt-1">
                     {formatPricePKR(item.discountPrice || item.price)}
                   </p>
                 </div>
 
-                {/* Quantity Controls */}
+                
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => updateCartQuantity(item.productId, item.quantity - 1)}
+                    onClick={() =>
+                      updateCartQuantity(item.productId, item.quantity - 1)
+                    }
                     disabled={item.quantity <= 1 || loading}
                     className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                   >
@@ -82,7 +89,9 @@ export default function CartPage() {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => updateCartQuantity(item.productId, item.quantity + 1)}
+                    onClick={() =>
+                      updateCartQuantity(item.productId, item.quantity + 1)
+                    }
                     disabled={loading}
                     className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                   >
@@ -90,10 +99,12 @@ export default function CartPage() {
                   </button>
                 </div>
 
-                {/* Item Total + Remove */}
+                
                 <div className="text-right shrink-0">
                   <p className="font-bold text-gray-900">
-                    {formatPricePKR((item.discountPrice || item.price) * item.quantity)}
+                    {formatPricePKR(
+                      (item.discountPrice || item.price) * item.quantity,
+                    )}
                   </p>
                   <button
                     onClick={() => removeFromCart(item.productId)}
@@ -115,17 +126,21 @@ export default function CartPage() {
             </button>
           </div>
 
-          {/* Order Summary */}
+          
           <div className="w-full lg:w-80 shrink-0">
             <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
-
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Order Summary
+              </h2>
               <div className="space-y-3 text-sm text-gray-700">
                 <div className="flex justify-between">
                   <span>
-                    Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)
+                    Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)}{" "}
+                    items)
                   </span>
-                  <span className="font-semibold">{formatPricePKR(subtotal)}</span>
+                  <span className="font-semibold">
+                    {formatPricePKR(subtotal)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -136,13 +151,22 @@ export default function CartPage() {
                   <span>{formatPricePKR(subtotal)}</span>
                 </div>
               </div>
-
-              <Link
-                href="/checkout"
-                className="mt-6 block w-full bg-indigo-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
-              >
-                Proceed to Checkout
-              </Link>
+              {session?.user ? (
+                <Link
+                  href="/checkout"
+                  className="mt-6 block w-full bg-indigo-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                >
+                  Proceed to Checkout
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="mt-6 block w-full bg-indigo-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                >
+                  Login to Checkout
+                </Link>
+              )}
+              ;
               <Link
                 href="/"
                 className="mt-3 block w-full text-center text-sm text-gray-500 hover:text-indigo-600"
@@ -151,7 +175,6 @@ export default function CartPage() {
               </Link>
             </div>
           </div>
-
         </div>
       </div>
     </div>

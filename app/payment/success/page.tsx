@@ -7,21 +7,34 @@ import { useShopping } from "@/components/ShoppingProvider";
 export default function PaymentSuccessPage() {
   const { clearCart } = useShopping();
 
-  // Clear cart when user lands here
   useEffect(() => {
-    clearCart();
+    const empty = async () => {
+      await clearCart();
+    };
+    empty();
   }, []);
-
+  useEffect(() => {
+    const handleSuccess = async () => {
+      // Directly call API to clear cart in MongoDB
+      await fetch("/api/cart", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearAll: true }),
+      });
+      // Then clear local state
+      await clearCart();
+    };
+    handleSuccess();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
       <div className="bg-white rounded-lg border border-gray-200 p-8 max-w-md w-full text-center">
-        
         <div className="text-5xl mb-4">✅</div>
-        
+
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Payment Successful!
         </h1>
-        
+
         <p className="text-gray-500 text-sm mb-6">
           Thank you for your order. We will process it shortly.
         </p>
@@ -40,7 +53,6 @@ export default function PaymentSuccessPage() {
             Back to Home
           </Link>
         </div>
-
       </div>
     </div>
   );
