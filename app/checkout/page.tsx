@@ -11,12 +11,12 @@ export default function CheckoutPage() {
   const { cartItems } = useShopping();
   const [loading, setLoading] = useState(false);
 
-  // Calculate total price
+
   const total = cartItems.reduce((sum, item) => {
     return sum + (item.discountPrice || item.price) * item.quantity;
   }, 0);
 
-  // Call API and redirect to Stripe
+
   const handlePayment = async () => {
     setLoading(true);
     try {
