@@ -46,7 +46,7 @@ export default function OrdersPage() {
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <p className="text-gray-600 mb-4">Please login to view your orders</p>
         <Link href="/login" className="bg-indigo-600 text-white px-4 py-2 rounded-lg">
           Login
@@ -65,7 +65,7 @@ export default function OrdersPage() {
 
   if (orders.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <p className="text-gray-600 mb-4">You have no orders yet</p>
         <Link href="/products" className="bg-indigo-600 text-white px-4 py-2 rounded-lg">
           Start Shopping

@@ -59,7 +59,7 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
-  // Loading skeleton
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -80,7 +80,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  // Error state
+
   if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -103,7 +103,7 @@ export default function ProductDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-        {/* Breadcrumb */}
+
         <nav className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-8">
           <Link href="/products" className="hover:text-indigo-600 transition">
             Catalog
@@ -117,9 +117,9 @@ export default function ProductDetailPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
 
-            {/* Left — Image Gallery */}
+
             <div className="bg-gray-50 p-6 border-r border-gray-100">
-              {/* Main Image */}
+
               <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white border border-gray-100">
                 <Image
                   src={activeImage}
@@ -130,7 +130,7 @@ export default function ProductDetailPage() {
                 />
               </div>
 
-              {/* Thumbnails */}
+
               {product.images.length > 1 && (
                 <div className="flex gap-3 mt-4 flex-wrap">
                   {product.images.map((img, i) => (
@@ -155,10 +155,10 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Right — Product Info */}
+
             <div className="p-8 flex flex-col gap-6">
 
-              {/* Title + Category */}
+
               <div>
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">
                   {product.category.name}
@@ -167,7 +167,6 @@ export default function ProductDetailPage() {
                   {product.title}
                 </h1>
 
-                {/* Ratings */}
                 {product.ratings && product.ratings.count > 0 && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="text-yellow-400">★</span>
@@ -181,7 +180,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Price */}
+
               <div className="flex items-baseline gap-3 py-4 border-y border-gray-100">
                 <span className="text-3xl font-black text-gray-900">
                   {formatPricePKR(product.discountPrice || product.price)}
@@ -200,7 +199,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Description */}
+
               <div>
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                   Product Details
@@ -210,7 +209,7 @@ export default function ProductDetailPage() {
                 </p>
               </div>
 
-              {/* Stock Status */}
+
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-gray-500">
                   Availability:
