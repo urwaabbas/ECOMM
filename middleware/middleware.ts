@@ -12,6 +12,6 @@ export const config = {
     "/dashboard/:path*",
     "/profile/:path*",
     "/checkout/:path*",
-    "/admin/:path*",
+
   ],
 };
