@@ -10,14 +10,22 @@ export default function CheckoutPage() {
   const { data: session } = useSession();
   const { cartItems } = useShopping();
   const [loading, setLoading] = useState(false);
-
+  const [name, setName] = useState(session?.user?.name || "");
+  const [email, setEmail] = useState(session?.user?.email || "");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
 
   const total = cartItems.reduce((sum, item) => {
     return sum + (item.discountPrice || item.price) * item.quantity;
   }, 0);
 
-
   const handlePayment = async () => {
+    if (!name || !email || !phone || !address || !city) {
+      alert("Please fill in all shipping details");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/checkout", {
@@ -38,7 +46,7 @@ export default function CheckoutPage() {
 
   if (!session?.user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <p className="text-gray-600 mb-4">Please login to checkout</p>
         <Link href="/login" className="bg-indigo-600 text-white px-4 py-2 rounded-lg">
           Login
@@ -49,7 +57,7 @@ export default function CheckoutPage() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <p className="text-gray-600 mb-4">Your cart is empty</p>
         <Link href="/products" className="bg-indigo-600 text-white px-4 py-2 rounded-lg">
           Shop Now
@@ -64,12 +72,10 @@ export default function CheckoutPage() {
 
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Checkout</h1>
 
-        {/* Order Summary */}
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Order Summary
           </h2>
-
           <div className="space-y-3">
             {cartItems.map((item) => (
               <div key={item.productId} className="flex justify-between text-sm">
@@ -82,7 +88,6 @@ export default function CheckoutPage() {
               </div>
             ))}
           </div>
-
           <div className="border-t border-gray-200 mt-4 pt-4 flex justify-between">
             <span className="font-bold text-gray-900">Total</span>
             <span className="font-bold text-indigo-600">
@@ -91,7 +96,78 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Pay Button */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Shipping Information
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="03XX-XXXXXXX"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Street Address
+              </label>
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="House No, Street, Area"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                City
+              </label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="Lahore, Karachi, Islamabad..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
+
         <button
           onClick={handlePayment}
           disabled={loading}

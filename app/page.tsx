@@ -34,25 +34,26 @@ const categories = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      <section className="bg-gray-50 border-b border-gray-200">
+      <section className="bg-yellow-700 border-b border-indigo-800">
         <div className="max-w-6xl mx-auto px-4 py-20 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white">
             Welcome to Haanli Bazaar
           </h1>
-          <p className="mt-4 text-gray-500 max-w-xl mx-auto text-lg">
+          <p className="mt-4 text-indigo-200 max-w-xl mx-auto text-lg">
             Browse premium products across Electronics, Apparel, Home & Living,
             and Fitness.
           </p>
           <div className="mt-8 flex gap-4 justify-center">
             <Link
               href="/products"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
+              className="bg-white text-indigo-700 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition"
+
             >
               Shop Now
             </Link>
             <Link
               href="/register"
-              className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+              className="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-600 transition"
             >
               Create Account
             </Link>

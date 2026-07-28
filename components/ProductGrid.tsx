@@ -79,7 +79,7 @@ export default function ProductGrid() {
     fetchFilteredProducts();
   }, [debouncedSearch, selectedCategory, sort]);
 
-  // ✅ Normalize product ID to plain string before any shopping action
+ 
   const normalizeProduct = (p: Product) => ({
     ...p,
     _id: p._id.toString(),
@@ -89,8 +89,8 @@ export default function ProductGrid() {
   const pid = (p: Product) => p._id.toString();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Controls */}
+    <div className="bg-yellow-700 max-w-7xl mx-auto px-4 py-8">
+  
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
@@ -125,7 +125,7 @@ export default function ProductGrid() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Categories */}
+        
         <aside className="w-full lg:w-64 bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
@@ -167,7 +167,7 @@ export default function ProductGrid() {
           )}
         </aside>
 
-        {/* Product Grid */}
+    
         <main className="flex-1">
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -214,7 +214,7 @@ export default function ProductGrid() {
 
                   <div className="px-4 pb-4 space-y-2">
                     <div className="flex gap-2">
-                      {/* ✅ Add to Cart — normalized product */}
+                      
                       <button
                         onClick={() => addToCart(normalizeProduct(p))}
                         disabled={p.stock === 0 || isInCart(pid(p))}
@@ -231,7 +231,7 @@ export default function ProductGrid() {
                           : "Add to Cart"}
                       </button>
 
-                      {/* ✅ Wishlist toggle — normalized ID */}
+                
                       <button
                         onClick={() =>
                           isInWishlist(pid(p))
