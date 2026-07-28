@@ -89,7 +89,7 @@ export default function ProductGrid() {
   const pid = (p: Product) => p._id.toString();
 
   return (
-    <div className="bg-yellow-700 max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
   
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
