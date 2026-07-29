@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useShopping } from "@/components/ShoppingProvider";
 import { formatPricePKR } from "@/lib/utilis";
+import { useSearchParams } from "next/navigation";
 
 interface Category {
   _id: string;
@@ -57,6 +58,19 @@ export default function ProductGrid() {
     }
     fetchCategories();
   }, []);
+const searchParams = useSearchParams();
+const categoryFromUrl = searchParams.get("category");
+
+// Set initial category from URL
+useEffect(() => {
+  if (categoryFromUrl) {
+    // Find matching category by name
+    const matched = categories.find(
+      (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
+    );
+    if (matched) setSelectedCategory(matched._id);
+  }
+}, [categoryFromUrl, categories]);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 400);
