@@ -1,4 +1,3 @@
-// app/api/products/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
@@ -52,13 +51,10 @@ export async function GET(request: Request) {
     const search = searchParams.get("search")?.trim();
 
     await dbConnect();
-    console.log("✅ DB connected, fetching from MongoDB");
 
     const sortMapping: Record<string, 1 | -1> = {
       price_asc: 1,
       price_desc: -1,
-      "low-to-high": 1,
-      "high-to-low": -1,
     };
 
     let queryFilter: Record<string, any> = {};
@@ -77,10 +73,7 @@ export async function GET(request: Request) {
       ];
     }
 
-    let productCursor = Product.find(queryFilter).populate(
-      "category",
-      "name slug",
-    );
+    let productCursor = Product.find(queryFilter).populate("category", "name slug");
 
     const sortDirection = sortMapping[sort ?? ""];
     if (sortDirection) {
@@ -88,21 +81,11 @@ export async function GET(request: Request) {
     }
 
     const fetchedProducts = await productCursor.lean().exec();
-    let products = fetchedProducts.map(normalizeProduct);
-
-    // Handle non-ObjectId category filter (by name or slug)
-    if (category && category !== "All" && !/^[0-9a-fA-F]{24}$/.test(category)) {
-      const normalizedCategory = category.toLowerCase();
-      products = products.filter(
-        (p) =>
-          p.category?.slug?.toLowerCase() === normalizedCategory ||
-          p.category?.name?.toLowerCase() === normalizedCategory,
-      );
-    }
+    const products = fetchedProducts.map(normalizeProduct);
 
     return NextResponse.json({ success: true, products }, { status: 200 });
   } catch (error: any) {
-    console.error("❌ Products API error:", error.message);
+    console.error("Products API error:", error.message);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 },

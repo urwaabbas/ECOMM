@@ -41,7 +41,7 @@ function ProductGridContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sort, setSort] = useState("");
 
   const searchParams = useSearchParams();
@@ -68,7 +68,7 @@ function ProductGridContent() {
       const matched = categories.find(
         (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
       );
-      if (matched) setSelectedCategory(matched._id);
+      if (matched) setSelectedCategories([matched._id]);
     }
   }, [categoryFromUrl, categories]);
 
@@ -80,18 +80,38 @@ function ProductGridContent() {
   useEffect(() => {
     async function fetchFilteredProducts() {
       setLoading(true);
-      const params = new URLSearchParams({
-        search: debouncedSearch,
-        category: selectedCategory,
-        sort,
-      });
+
+      const params = new URLSearchParams();
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCategories.length === 1) params.append("category", selectedCategories[0]);
+      if (sort) params.append("sort", sort);
+
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
-      if (data.success) setProducts(data.products);
+
+      if (data.success) {
+        let filtered = data.products;
+
+        if (selectedCategories.length > 1) {
+          filtered = filtered.filter((p: Product) =>
+            selectedCategories.includes(p.category._id)
+          );
+        }
+
+        setProducts(filtered);
+      }
       setLoading(false);
     }
     fetchFilteredProducts();
-  }, [debouncedSearch, selectedCategory, sort]);
+  }, [debouncedSearch, selectedCategories, sort]);
+
+  const toggleCategory = (catId: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(catId)
+        ? prev.filter((id) => id !== catId)
+        : [...prev, catId]
+    );
+  };
 
   const normalizeProduct = (p: Product) => ({
     ...p,
@@ -103,6 +123,7 @@ function ProductGridContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
@@ -134,6 +155,34 @@ function ProductGridContent() {
             </select>
           </div>
         </div>
+
+        {selectedCategories.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedCategories.map((id) => {
+              const cat = categories.find((c) => c._id === id);
+              return (
+                <span
+                  key={id}
+                  className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full"
+                >
+                  {cat?.name}
+                  <button
+                    onClick={() => toggleCategory(id)}
+                    className="ml-1 hover:text-indigo-900"
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
+            <button
+              onClick={() => setSelectedCategories([])}
+              className="text-xs text-gray-400 hover:text-red-500 transition"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -143,14 +192,14 @@ function ProductGridContent() {
               Categories
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              Filter products by category for faster browsing.
+              Select one or more categories.
             </p>
           </div>
           <div className="space-y-2">
             <button
-              onClick={() => setSelectedCategory("")}
+              onClick={() => setSelectedCategories([])}
               className={`w-full text-left px-4 py-3 rounded-2xl border transition ${
-                selectedCategory === ""
+                selectedCategories.length === 0
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
                   : "border-gray-200 bg-gray-50 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50/50"
               }`}
@@ -160,14 +209,17 @@ function ProductGridContent() {
             {categories.map((cat) => (
               <button
                 key={cat._id}
-                onClick={() => setSelectedCategory(cat._id)}
-                className={`w-full text-left px-4 py-3 rounded-2xl border transition ${
-                  selectedCategory === cat._id
+                onClick={() => toggleCategory(cat._id)}
+                className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between ${
+                  selectedCategories.includes(cat._id)
                     ? "border-indigo-300 bg-indigo-50 text-indigo-700"
                     : "border-gray-200 bg-gray-50 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50/50"
                 }`}
               >
-                {cat.name}
+                <span>{cat.name}</span>
+                {selectedCategories.includes(cat._id) && (
+                  <span className="text-indigo-600 font-bold">✓</span>
+                )}
               </button>
             ))}
           </div>
@@ -192,6 +244,12 @@ function ProductGridContent() {
           ) : products.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-200">
               <p className="text-gray-500">No products found matching your filters.</p>
+              <button
+                onClick={() => { setSelectedCategories([]); setSearch(""); setSort(""); }}
+                className="mt-4 text-sm text-indigo-600 hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
