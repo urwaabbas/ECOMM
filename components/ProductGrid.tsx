@@ -43,6 +43,9 @@ function ProductGridContent() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sort, setSort] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
 
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get("category");
@@ -78,6 +81,10 @@ function ProductGridContent() {
   }, [search]);
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, selectedCategories, sort]);
+
+  useEffect(() => {
     async function fetchFilteredProducts() {
       setLoading(true);
 
@@ -85,25 +92,26 @@ function ProductGridContent() {
       if (debouncedSearch) params.append("search", debouncedSearch);
       if (selectedCategories.length === 1) params.append("category", selectedCategories[0]);
       if (sort) params.append("sort", sort);
+      params.append("page", currentPage.toString());
 
       const res = await fetch(`/api/products?${params.toString()}`);
       const data = await res.json();
 
       if (data.success) {
         let filtered = data.products;
-
         if (selectedCategories.length > 1) {
           filtered = filtered.filter((p: Product) =>
             selectedCategories.includes(p.category._id)
           );
         }
-
         setProducts(filtered);
+        setTotalPages(data.totalPages || 1);
+        setTotalProducts(data.totalProducts || 0);
       }
       setLoading(false);
     }
     fetchFilteredProducts();
-  }, [debouncedSearch, selectedCategories, sort]);
+  }, [debouncedSearch, selectedCategories, sort, currentPage]);
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -252,76 +260,118 @@ function ProductGridContent() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {products.map((p) => (
-                <div
-                  key={pid(p)}
-                  className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
-                >
-                  <div>
-                    <Link href={`/products/${pid(p)}`} className="block">
-                      <div className="relative aspect-square w-full">
-                        <Image
-                          src={p.images[0]}
-                          alt={p.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
-                          {p.category?.name}
-                        </p>
-                        <h3 className="font-bold text-gray-800 mt-1">{p.title}</h3>
-                        <p className="text-gray-900 font-semibold mt-2">
-                          {formatPricePKR(p.discountPrice || p.price)}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-
-                  <div className="px-4 pb-4 space-y-2">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => addToCart(normalizeProduct(p))}
-                        disabled={p.stock === 0 || isInCart(pid(p))}
-                        className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
-                          p.stock === 0 || isInCart(pid(p))
-                            ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                            : "bg-indigo-600 text-white hover:bg-indigo-700"
-                        }`}
-                      >
-                        {p.stock === 0
-                          ? "Out of Stock"
-                          : isInCart(pid(p))
-                          ? "✓ Added"
-                          : "Add to Cart"}
-                      </button>
-                      <button
-                        onClick={() =>
-                          isInWishlist(pid(p))
-                            ? removeFromWishlist(pid(p))
-                            : addToWishlist(normalizeProduct(p))
-                        }
-                        className={`w-11 rounded-md border text-lg transition ${
-                          isInWishlist(pid(p))
-                            ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        {isInWishlist(pid(p)) ? "♥" : "♡"}
-                      </button>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {products.map((p) => (
+                  <div
+                    key={pid(p)}
+                    className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
+                  >
+                    <div>
+                      <Link href={`/products/${pid(p)}`} className="block">
+                        <div className="relative aspect-square w-full">
+                          <Image
+                            src={p.images[0]}
+                            alt={p.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
+                            {p.category?.name}
+                          </p>
+                          <h3 className="font-bold text-gray-800 mt-1">{p.title}</h3>
+                          <p className="text-gray-900 font-semibold mt-2">
+                            {formatPricePKR(p.discountPrice || p.price)}
+                          </p>
+                        </div>
+                      </Link>
                     </div>
-                    <Link
-                      href={`/products/${pid(p)}`}
-                      className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
-                    >
-                      View Details
-                    </Link>
+
+                    <div className="px-4 pb-4 space-y-2">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addToCart(normalizeProduct(p))}
+                          disabled={p.stock === 0 || isInCart(pid(p))}
+                          className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                            p.stock === 0 || isInCart(pid(p))
+                              ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                              : "bg-indigo-600 text-white hover:bg-indigo-700"
+                          }`}
+                        >
+                          {p.stock === 0
+                            ? "Out of Stock"
+                            : isInCart(pid(p))
+                            ? "✓ Added"
+                            : "Add to Cart"}
+                        </button>
+                        <button
+                          onClick={() =>
+                            isInWishlist(pid(p))
+                              ? removeFromWishlist(pid(p))
+                              : addToWishlist(normalizeProduct(p))
+                          }
+                          className={`w-11 rounded-md border text-lg transition ${
+                            isInWishlist(pid(p))
+                              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                              : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {isInWishlist(pid(p)) ? "♥" : "♡"}
+                        </button>
+                      </div>
+                      <Link
+                        href={`/products/${pid(p)}`}
+                        className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
+                      >
+                        View Details
+                      </Link>
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-10 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Previous
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
+                        currentPage === page
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {totalProducts > 0 && (
+                <p className="text-center text-xs text-gray-400 mt-3">
+                  Showing {(currentPage - 1) * 12 + 1}–{Math.min(currentPage * 12, totalProducts)} of {totalProducts} products
+                </p>
+              )}
+            </>
           )}
         </main>
       </div>

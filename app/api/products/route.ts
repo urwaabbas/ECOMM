@@ -49,6 +49,9 @@ export async function GET(request: Request) {
     const category = searchParams.get("category");
     const sort = searchParams.get("sort");
     const search = searchParams.get("search")?.trim();
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = 12;
+    const skip = (page - 1) * limit;
 
     await dbConnect();
 
@@ -72,8 +75,13 @@ export async function GET(request: Request) {
         { description: { $regex: search, $options: "i" } },
       ];
     }
+    const totalProducts = await Product.countDocuments(queryFilter);
+    const totalPages = Math.ceil(totalProducts / limit);
 
-    let productCursor = Product.find(queryFilter).populate("category", "name slug");
+    let productCursor = Product.find(queryFilter)
+      .populate("category", "name slug")
+      .skip(skip)
+      .limit(limit);
 
     const sortDirection = sortMapping[sort ?? ""];
     if (sortDirection) {
@@ -83,7 +91,16 @@ export async function GET(request: Request) {
     const fetchedProducts = await productCursor.lean().exec();
     const products = fetchedProducts.map(normalizeProduct);
 
-    return NextResponse.json({ success: true, products }, { status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        products,
+        totalProducts,
+        totalPages,
+        currentPage: page,
+      },
+      { status: 200 },
+    );
   } catch (error: any) {
     console.error("Products API error:", error.message);
     return NextResponse.json(
