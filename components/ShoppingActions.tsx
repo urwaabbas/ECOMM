@@ -34,7 +34,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
     loading,
   } = useShopping();
 
-  // ─── NAVBAR MODE: no product prop passed ───────────────────────
+
   if (!product) {
     return (
       <div className="flex items-center gap-4">
@@ -65,7 +65,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
     );
   }
 
-  // ─── PRODUCT DETAIL MODE: product prop passed ──────────────────
+  
   const handleAddToCart = () => {
     if (!session?.user) {
       router.push("/login");
@@ -92,7 +92,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Add to Cart Button */}
+   
       <button
         onClick={handleAddToCart}
         disabled={outOfStock || inCart || loading}
@@ -107,7 +107,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
         {outOfStock ? "Out of Stock" : inCart ? "✓ Added to Cart" : "Add to Cart"}
       </button>
 
-      {/* Wishlist Toggle Button */}
+     
       <button
         onClick={handleWishlistToggle}
         disabled={loading}
@@ -120,7 +120,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
         {inWishlist ? "♥ Remove from Wishlist" : "♡ Add to Wishlist"}
       </button>
 
-      {/* Login prompt if not signed in */}
+    
       {!session?.user && (
         <p className="text-xs text-center text-gray-400">
           <Link href="/login" className="text-indigo-600 hover:underline font-semibold">

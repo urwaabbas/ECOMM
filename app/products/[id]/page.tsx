@@ -85,7 +85,7 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white border border-red-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
-          <div className="text-4xl mb-4">😕</div>
+          <div className="text-4xl mb-4"> </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">Product Not Found</h2>
           <p className="text-sm text-red-600 mb-6">{error || "Item was not found."}</p>
           <Link
@@ -225,7 +225,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Shopping Actions */}
               <div className="pt-2">
                 <ShoppingActions
                   product={{
@@ -241,7 +240,7 @@ export default function ProductDetailPage() {
                 />
               </div>
 
-              {/* Back link */}
+        
               <Link
                 href="/products"
                 className="text-xs text-gray-400 hover:text-indigo-600 transition text-center"

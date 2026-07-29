@@ -1,4 +1,4 @@
-// models/Product.ts
+
 import mongoose, { Schema, model, models } from "mongoose";
 
 export interface IProduct {
@@ -69,7 +69,7 @@ const ProductSchema = new Schema<IProduct>(
   { timestamps: true },
 );
 
-// Performance compound full-text indices for high-speed catalog lookups
+
 ProductSchema.index({ title: "text", description: "text" });
 
 const Product = models.Product || model<IProduct>("Product", ProductSchema);

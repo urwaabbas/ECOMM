@@ -46,7 +46,7 @@ export function useShopping() {
   return ctx;
 }
 
-// localStorage helpers
+
 const getLocalCart = (): CartItem[] => {
   if (typeof window === "undefined") return [];
   try {
@@ -77,7 +77,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
 
   const isLoggedIn = !!session?.user;
 
-  // Fetch cart from API (logged in users)
+
   const refreshCart = useCallback(async () => {
     if (!session?.user) return;
     try {
@@ -89,7 +89,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   }, [session]);
 
-  // Fetch wishlist from API (logged in users)
+
   const refreshWishlist = useCallback(async () => {
     if (!session?.user) return;
     try {
@@ -101,14 +101,14 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   }, [session]);
 
-  // When session changes (login/logout)
+
   useEffect(() => {
     if (session?.user) {
-      // User just logged in → merge localStorage with DB
+      
       const localCart = getLocalCart();
       const localWishlist = getLocalWishlist();
 
-      // If guest had items → sync them to DB
+      
       if (localCart.length > 0) {
         localCart.forEach(async (item) => {
           await fetch("/api/cart", {
@@ -134,16 +134,16 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
       refreshCart();
       refreshWishlist();
     } else {
-      // Not logged in → load from localStorage
+    
       setCartItems(getLocalCart());
       setWishlistItems(getLocalWishlist());
     }
   }, [session, refreshCart, refreshWishlist]);
 
-  // Add to cart
+  
   const addToCart = async (product: any) => {
     if (!isLoggedIn) {
-      // Guest → save to localStorage
+    
       const current = getLocalCart();
       const exists = current.find(i => i.productId === product._id);
       let updated;
@@ -168,7 +168,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
       return;
     }
 
-    // Logged in → save to DB
+  
     setLoading(true);
     try {
       const res = await fetch("/api/cart", {
@@ -192,7 +192,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Remove from cart
+  
   const removeFromCart = async (productId: string) => {
     if (!isLoggedIn) {
       const updated = getLocalCart().filter(i => i.productId !== productId);
@@ -216,7 +216,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Update quantity
+
   const updateCartQuantity = async (productId: string, quantity: number) => {
     if (!isLoggedIn) {
       const updated = getLocalCart().map(i =>
@@ -242,7 +242,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Add to wishlist
+
   const addToWishlist = async (product: any) => {
     if (!isLoggedIn) {
       const current = getLocalWishlist();
@@ -282,7 +282,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Remove from wishlist
+ 
   const removeFromWishlist = async (productId: string) => {
     if (!isLoggedIn) {
       const updated = getLocalWishlist().filter(i => i.productId !== productId);
@@ -306,7 +306,7 @@ export default function ShoppingProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Clear cart
+
   const clearCart = async () => {
     if (!isLoggedIn) {
       localStorage.removeItem("guest_cart");
