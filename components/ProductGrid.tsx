@@ -1,4 +1,5 @@
 "use client";
+
 import { Suspense } from "react";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -26,7 +27,7 @@ interface Product {
   category: Category;
 }
 
-export default function ProductGrid() {
+function ProductGridContent() {
   const {
     addToCart,
     addToWishlist,
@@ -43,6 +44,9 @@ export default function ProductGrid() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sort, setSort] = useState("");
 
+  const searchParams = useSearchParams();
+  const categoryFromUrl = searchParams.get("category");
+
   useEffect(() => {
     async function fetchCategories() {
       const res = await fetch("/api/products");
@@ -58,19 +62,15 @@ export default function ProductGrid() {
     }
     fetchCategories();
   }, []);
-const searchParams = useSearchParams();
-const categoryFromUrl = searchParams.get("category");
 
-
-useEffect(() => {
-  if (categoryFromUrl) {
-    
-    const matched = categories.find(
-      (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
-    );
-    if (matched) setSelectedCategory(matched._id);
-  }
-}, [categoryFromUrl, categories]);
+  useEffect(() => {
+    if (categoryFromUrl && categories.length > 0) {
+      const matched = categories.find(
+        (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
+      );
+      if (matched) setSelectedCategory(matched._id);
+    }
+  }, [categoryFromUrl, categories]);
 
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearch(search), 400);
@@ -93,7 +93,6 @@ useEffect(() => {
     fetchFilteredProducts();
   }, [debouncedSearch, selectedCategory, sort]);
 
- 
   const normalizeProduct = (p: Product) => ({
     ...p,
     _id: p._id.toString(),
@@ -103,8 +102,7 @@ useEffect(() => {
   const pid = (p: Product) => p._id.toString();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-  
+    <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
@@ -139,7 +137,6 @@ useEffect(() => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        
         <aside className="w-full lg:w-64 bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
           <div className="mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
@@ -181,7 +178,6 @@ useEffect(() => {
           )}
         </aside>
 
-    
         <main className="flex-1">
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -228,7 +224,6 @@ useEffect(() => {
 
                   <div className="px-4 pb-4 space-y-2">
                     <div className="flex gap-2">
-                      
                       <button
                         onClick={() => addToCart(normalizeProduct(p))}
                         disabled={p.stock === 0 || isInCart(pid(p))}
@@ -244,8 +239,6 @@ useEffect(() => {
                           ? "✓ Added"
                           : "Add to Cart"}
                       </button>
-
-                
                       <button
                         onClick={() =>
                           isInWishlist(pid(p))
@@ -261,7 +254,6 @@ useEffect(() => {
                         {isInWishlist(pid(p)) ? "♥" : "♡"}
                       </button>
                     </div>
-
                     <Link
                       href={`/products/${pid(p)}`}
                       className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
@@ -276,5 +268,25 @@ useEffect(() => {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function ProductGrid() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96">
+              <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+              <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
+              <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    }>
+      <ProductGridContent />
+    </Suspense>
   );
 }
