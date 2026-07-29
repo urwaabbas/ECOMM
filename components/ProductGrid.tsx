@@ -61,10 +61,10 @@ export default function ProductGrid() {
 const searchParams = useSearchParams();
 const categoryFromUrl = searchParams.get("category");
 
-// Set initial category from URL
+
 useEffect(() => {
   if (categoryFromUrl) {
-    // Find matching category by name
+    
     const matched = categories.find(
       (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
     );
