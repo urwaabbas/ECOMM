@@ -7,7 +7,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-  
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -16,8 +15,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
-    const { items } = await request.json();
+    const { items, shippingInfo } = await request.json();
+
     if (!items || items.length === 0) {
       return NextResponse.json(
         { error: "Cart is empty" },
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    
     const lineItems = items.map((item: any) => ({
       price_data: {
         currency: "usd",
@@ -38,7 +36,6 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
     }));
 
-  
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
@@ -46,10 +43,14 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/cancel`,
       metadata: {
         userId: session.user.id,
+        shippingName: shippingInfo?.name || "",
+        shippingEmail: shippingInfo?.email || "",
+        shippingPhone: shippingInfo?.phone || "",
+        shippingAddress: shippingInfo?.address || "",
+        shippingCity: shippingInfo?.city || "",
       },
     });
 
-    
     return NextResponse.json({ url: checkoutSession.url });
 
   } catch (error: any) {

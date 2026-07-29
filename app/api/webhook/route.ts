@@ -5,11 +5,11 @@ import Order from "@/models/Order";
 import Cart from "@/models/Cart";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   try {
-    
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
 
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!,
+        process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err) {
       console.error("Webhook signature failed:", err);
@@ -32,9 +32,7 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      
       const userId = session.metadata?.userId;
-
       if (!userId) {
         return NextResponse.json({ error: "No user ID" }, { status: 400 });
       }
@@ -47,6 +45,15 @@ export async function POST(request: NextRequest) {
         await Order.create({
           user: userId,
           items: cart.items,
+          shippingInfo: {
+            name: session.metadata?.shippingName || "",
+            email: session.metadata?.shippingEmail || "",
+            phone: session.metadata?.shippingPhone || "",
+            address: session.metadata?.shippingAddress || "",
+            city: session.metadata?.shippingCity || "",
+          },
+          subtotal: session.amount_total ? session.amount_total / 100 : 0,
+          shipping: 0,
           total: session.amount_total ? session.amount_total / 100 : 0,
           status: "paid",
           paymentId: session.payment_intent,
@@ -55,11 +62,12 @@ export async function POST(request: NextRequest) {
         cart.items = [];
         await cart.save();
 
-        console.log(" Order saved for user:", userId);
+        console.log("✅ Order saved for user:", userId);
       }
     }
 
     return NextResponse.json({ received: true });
+
   } catch (error: any) {
     console.error("Webhook error:", error.message);
     return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
