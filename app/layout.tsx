@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import Navbar from "@/components/Navbar";
 import ShoppingProvider from "@/components/ShoppingProvider";
-import Footer from "@/components/Footer";
+import ConditionalLayout from "@/components/ConditionalLayout";
+
 export const metadata: Metadata = {
-  title: "E-Commerce Platform",
-  description: "Next.js 5 Relational Product Checkout Framework",
+  title: "Haanli Bazaar",
+  description: "Next.js E-Commerce Platform",
 };
 
 export default function RootLayout({
@@ -19,9 +19,9 @@ export default function RootLayout({
       <body className="h-full font-sans text-gray-900 flex flex-col">
         <Providers>
           <ShoppingProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
           </ShoppingProvider>
         </Providers>
       </body>

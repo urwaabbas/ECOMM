@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface User {
   _id: string;
@@ -60,37 +59,35 @@ export default function AdminUsersPage() {
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
 
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-            <p className="text-sm text-gray-500 mt-1">{users.length} registered users</p>
-          </div>
-          <Link
-            href="/admin"
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
-          >
-            ← Back to Dashboard
-          </Link>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm text-gray-500 mt-1">{users.length} registered users</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  
+        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Name</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Email</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Role</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Verified</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-600">Joined</th>
+              <tr className="bg-gray-100 border-b border-gray-200">
+                <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Verified</th>
+                <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Joined</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user, i) => (
-                <tr key={user._id} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <tr
+                  key={user._id}
+                  className={`border-b border-gray-100 hover:bg-gray-50 transition ${
+                    i % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                  }`}
+                >
                   <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
-                  <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                  <td className="px-6 py-4 text-gray-500 text-xs">{user.email}</td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                       user.role === "admin"
                         ? "bg-indigo-100 text-indigo-700"
                         : "bg-gray-100 text-gray-600"
@@ -99,7 +96,7 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                       user.isVerified
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-600"
@@ -107,13 +104,44 @@ export default function AdminUsersPage() {
                       {user.isVerified ? "Verified" : "Unverified"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">
+                  <td className="px-6 py-4 text-gray-400 text-xs">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        
+        <div className="md:hidden space-y-4">
+          {users.map((user) => (
+            <div key={user._id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex justify-between items-start mb-2">
+                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  user.role === "admin"
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "bg-gray-100 text-gray-600"
+                }`}>
+                  {user.role.toUpperCase()}
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mb-3">{user.email}</p>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  user.isVerified
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-600"
+                }`}>
+                  {user.isVerified ? "Verified" : "Unverified"}
+                </span>
+                <p className="text-xs text-gray-400">
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
 
       </div>

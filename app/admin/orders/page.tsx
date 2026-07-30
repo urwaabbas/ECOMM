@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface Order {
   _id: string;
@@ -88,27 +87,15 @@ export default function AdminOrdersPage() {
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
-            <p className="text-sm text-gray-500 mt-1">{orders.length} total orders</p>
-          </div>
-          <Link
-            href="/admin"
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
-          >
-            ← Back to Dashboard
-          </Link>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
+          <p className="text-sm text-gray-500 mt-1">{orders.length} total orders</p>
         </div>
 
         {/* Status Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {["pending", "paid", "processing", "completed", "cancelled"].map((s) => (
-            <div
-              key={s}
-              className={`rounded-xl px-4 py-3 text-center ${statusStyle[s]}`}
-            >
+            <div key={s} className={`rounded-xl px-4 py-3 text-center ${statusStyle[s]}`}>
               <p className="text-xs font-semibold uppercase tracking-wide">{s}</p>
               <p className="text-2xl font-bold mt-1">
                 {orders.filter((o) => o.status === s).length}
@@ -117,10 +104,8 @@ export default function AdminOrdersPage() {
           ))}
         </div>
 
-        {/* Orders Table */}
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-
-          {/* Table Header */}
+        
+        <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div className="grid grid-cols-[1fr_1.2fr_2fr_1fr_1.2fr] bg-gray-100 border-b border-gray-200 px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Order ID</span>
             <span>Customer</span>
@@ -129,7 +114,6 @@ export default function AdminOrdersPage() {
             <span>Status</span>
           </div>
 
-          {/* Rows */}
           <div className="divide-y divide-gray-100">
             {orders.map((order, i) => (
               <div
@@ -138,7 +122,6 @@ export default function AdminOrdersPage() {
                   i % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                 }`}
               >
-                {/* Order ID */}
                 <div>
                   <p className="text-xs font-mono font-semibold text-gray-700">
                     #{order._id.substring(0, 10).toUpperCase()}
@@ -147,32 +130,24 @@ export default function AdminOrdersPage() {
                     {new Date(order.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-
-                {/* Customer */}
                 <div>
                   <p className="text-sm font-semibold text-gray-800 truncate">
-                    {order.user?.name || "Unknown"}
+                    {order.user?.name || "Guest User"}
                   </p>
                   <p className="text-[10px] text-gray-400 truncate">
                     {order.user?.email}
                   </p>
                 </div>
-
-                {/* Items */}
                 <div>
                   <p className="text-xs text-gray-600 line-clamp-2">
                     {order.items.map((i) => `${i.title} x${i.quantity}`).join(", ")}
                   </p>
                 </div>
-
-                {/* Total */}
                 <div>
                   <p className="text-sm font-semibold text-gray-800">
                     PKR {(order.total * 278).toLocaleString()}
                   </p>
                 </div>
-
-                {/* Status */}
                 <div>
                   <select
                     value={order.status}
@@ -189,6 +164,45 @@ export default function AdminOrdersPage() {
               </div>
             ))}
           </div>
+        </div>
+
+    
+        <div className="md:hidden space-y-4">
+          {orders.map((order) => (
+            <div key={order._id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="text-xs font-mono font-bold text-gray-700">
+                    #{order._id.substring(0, 10).toUpperCase()}
+                  </p>
+                  <p className="text-[10px] text-gray-400">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <select
+                  value={order.status}
+                  onChange={(e) => updateStatus(order._id, e.target.value)}
+                  className={`text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none ${statusStyle[order.status]}`}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <p className="text-sm font-semibold text-gray-800">
+                {order.user?.name || "Guest User"}
+              </p>
+              <p className="text-xs text-gray-400 mb-2">{order.user?.email}</p>
+              <p className="text-xs text-gray-600 mb-3">
+                {order.items.map((i) => `${i.title} x${i.quantity}`).join(", ")}
+              </p>
+              <p className="text-sm font-bold text-indigo-600">
+                PKR {(order.total * 278).toLocaleString()}
+              </p>
+            </div>
+          ))}
         </div>
 
       </div>
