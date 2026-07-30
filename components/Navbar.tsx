@@ -13,24 +13,43 @@ export default function Navbar() {
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-
         <Link href="/" className="text-lg font-bold text-indigo-600">
           Haanli Bazaar
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/products" className="text-sm text-gray-600 hover:text-indigo-600 transition">
+          <Link
+            href="/products"
+            className="text-sm text-gray-600 hover:text-indigo-600 transition"
+          >
             Products
           </Link>
-          <Link href="/wishlist" className="text-sm text-gray-600 hover:text-indigo-600 transition">
+          <Link
+            href="/wishlist"
+            className="text-sm text-gray-600 hover:text-indigo-600 transition"
+          >
             Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
-          <Link href="/cart" className="text-sm text-gray-600 hover:text-indigo-600 transition">
+          <Link
+            href="/cart"
+            className="text-sm text-gray-600 hover:text-indigo-600 transition"
+          >
             Cart {cartCount > 0 && `(${cartCount})`}
           </Link>
-          <Link href="/orders" className="text-sm text-gray-600 hover:text-indigo-600 transition">
+          <Link
+            href="/orders"
+            className="text-sm text-gray-600 hover:text-indigo-600 transition"
+          >
             Orders
           </Link>
+          {(session?.user as any)?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
+            >
+              Admin
+            </Link>
+          )}
 
           {session?.user ? (
             <div className="flex items-center gap-3">
@@ -46,10 +65,16 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Link href="/login" className="text-sm text-gray-600 hover:text-indigo-600 transition">
+              <Link
+                href="/login"
+                className="text-sm text-gray-600 hover:text-indigo-600 transition"
+              >
                 Login
               </Link>
-              <Link href="/register" className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+              <Link
+                href="/register"
+                className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+              >
                 Register
               </Link>
             </div>
@@ -61,19 +86,37 @@ export default function Navbar() {
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           )}
         </button>
-
       </div>
 
-      
       {menuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
           <Link
@@ -104,6 +147,14 @@ export default function Navbar() {
           >
             Orders
           </Link>
+          {(session?.user as any)?.role === "admin" && (
+            <Link
+              href="/admin"
+              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
+            >
+              Admin
+            </Link>
+          )}
 
           <div className="border-t border-gray-100 pt-3">
             {session?.user ? (
@@ -112,10 +163,15 @@ export default function Navbar() {
                   <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-bold">
                     {session.user.name?.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-700">{session.user.name}</span>
+                  <span className="text-sm text-gray-700">
+                    {session.user.name}
+                  </span>
                 </div>
                 <button
-                  onClick={() => { signOut(); setMenuOpen(false); }}
+                  onClick={() => {
+                    signOut();
+                    setMenuOpen(false);
+                  }}
                   className="text-sm text-red-500 hover:text-red-700 transition"
                 >
                   Logout
@@ -142,7 +198,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-
     </nav>
   );
 }
