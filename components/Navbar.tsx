@@ -42,14 +42,7 @@ export default function Navbar() {
           >
             Orders
           </Link>
-          {(session?.user as any)?.role === "admin" && (
-            <Link
-              href="/admin"
-              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
-            >
-              Admin
-            </Link>
-          )}
+          
 
           {session?.user ? (
             <div className="flex items-center gap-3">
