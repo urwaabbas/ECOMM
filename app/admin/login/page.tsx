@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -43,16 +44,15 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-
-        {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-black text-white">Haanli Bazaar</h1>
           <p className="text-gray-400 text-sm mt-1">Admin Portal</p>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
-          <h2 className="text-lg font-bold text-white mb-1">Sign in to Dashboard</h2>
+          <h2 className="text-lg font-bold text-white mb-1">
+            Sign in to Dashboard
+          </h2>
           <p className="text-gray-500 text-sm mb-6">
             Restricted access — admins only
           </p>
@@ -82,6 +82,7 @@ export default function AdminLoginPage() {
               <label className="block text-sm font-medium text-gray-400 mb-1">
                 Password
               </label>
+
               <input
                 type="password"
                 value={password}
@@ -90,6 +91,15 @@ export default function AdminLoginPage() {
                 required
                 className="w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               />
+            </div>
+
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-indigo-400 hover:text-indigo-300"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             <button
@@ -108,7 +118,6 @@ export default function AdminLoginPage() {
             </a>
           </p>
         </div>
-
       </div>
     </div>
   );

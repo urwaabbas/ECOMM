@@ -1,4 +1,3 @@
-// app/login/page.tsx
 "use client";
 
 import { signIn } from "next-auth/react";
@@ -7,7 +6,6 @@ import { useState, FormEvent, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-// Next.js requires components accessing search parameters to be wrapped in a Suspense boundary
 function LoginForm() {
   const searchParams = useSearchParams();
   const isVerified = searchParams.get("verified") === "true";
@@ -23,7 +21,6 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // "credentials" matches the credentials provider setup in NextAuth options
       const res = await signIn("credentials", {
         redirect: false,
         email,
@@ -33,7 +30,6 @@ function LoginForm() {
       if (res?.error) {
         setError(res.error || "Invalid email or password");
       } else {
-        // Success! Redirect to home page
         router.push("/");
         router.refresh();
       }
@@ -53,7 +49,6 @@ function LoginForm() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        
         {isVerified && (
           <div className="mb-6 p-4 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium shadow-sm">
             Email verified successfully! You can now log in to your account.
@@ -98,6 +93,14 @@ function LoginForm() {
                   Password
                 </label>
               </div>
+              <div className="flex justify-end">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-indigo-600 hover:text-indigo-700"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="mt-2">
                 <input
                   id="password"
@@ -140,11 +143,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-gray-500 font-medium">Loading form...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-gray-500 font-medium">Loading form...</div>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );
