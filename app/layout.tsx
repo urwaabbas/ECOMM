@@ -5,7 +5,7 @@ import ShoppingProvider from "@/components/ShoppingProvider";
 import ConditionalLayout from "@/components/ConditionalLayout";
 
 export const metadata: Metadata = {
-  title: "Haanli Bazaar",
+  title: "E-Commerce Platform",
   description: "Next.js E-Commerce Platform",
 };
 
