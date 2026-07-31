@@ -134,11 +134,14 @@ export default function AdminProductsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
-
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-            <p className="text-sm text-gray-500 mt-1">{products.length} products</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Product Management
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {products.length} products
+            </p>
           </div>
           <button
             onClick={() => {
@@ -159,9 +162,14 @@ export default function AdminProductsPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               {editingProduct ? "Edit Product" : "Add New Product"}
             </h2>
-            <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form
+              onSubmit={handleAdd}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={title}
@@ -172,7 +180,9 @@ export default function AdminProductsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
                 <select
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
@@ -187,7 +197,9 @@ export default function AdminProductsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price (USD)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Price (USD)
+                </label>
                 <input
                   type="number"
                   value={price}
@@ -198,7 +210,9 @@ export default function AdminProductsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Stock
+                </label>
                 <input
                   type="number"
                   value={stock}
@@ -208,7 +222,9 @@ export default function AdminProductsPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Image URL
+                </label>
                 <input
                   type="text"
                   value={image}
@@ -218,7 +234,9 @@ export default function AdminProductsPage() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -233,7 +251,11 @@ export default function AdminProductsPage() {
                   disabled={submitting}
                   className="bg-indigo-600 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
                 >
-                  {submitting ? "Saving..." : editingProduct ? "Update Product" : "Add Product"}
+                  {submitting
+                    ? "Saving..."
+                    : editingProduct
+                      ? "Update Product"
+                      : "Add Product"}
                 </button>
               </div>
             </form>
@@ -260,9 +282,13 @@ export default function AdminProductsPage() {
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
                   {product.images?.[0] ? (
                     <img
-                      src={product.images[0]}
+                      src={product.images?.[0] || "/placeholder.png"}
                       alt={product.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/100x100?text=No+Image";
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
@@ -273,14 +299,20 @@ export default function AdminProductsPage() {
                 <p className="text-sm font-semibold text-gray-800 truncate">
                   {product.title}
                 </p>
-                <p className="text-xs text-gray-500">{product.category?.name}</p>
+                <p className="text-xs text-gray-500">
+                  {product.category?.name}
+                </p>
                 <p className="text-sm text-gray-800">
                   PKR {(product.price * 278).toLocaleString()}
                 </p>
-                <p className={`text-sm font-semibold ${
-                  product.stock === 0 ? "text-red-500" : "text-green-600"
-                }`}>
-                  {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
+                <p
+                  className={`text-sm font-semibold ${
+                    product.stock === 0 ? "text-red-500" : "text-green-600"
+                  }`}
+                >
+                  {product.stock === 0
+                    ? "Out of Stock"
+                    : `${product.stock} units`}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -303,14 +335,21 @@ export default function AdminProductsPage() {
 
         <div className="md:hidden space-y-4">
           {products.map((product) => (
-            <div key={product._id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div
+              key={product._id}
+              className="bg-white rounded-xl border border-gray-200 p-4"
+            >
               <div className="flex gap-3 mb-3">
                 <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                   {product.images?.[0] ? (
                     <img
-                      src={product.images[0]}
+                      src={product.images?.[0] || "/placeholder.png"}
                       alt={product.title}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/100x100?text=No+Image";
+                      }}
                     />
                   ) : null}
                 </div>
@@ -318,7 +357,9 @@ export default function AdminProductsPage() {
                   <p className="text-sm font-semibold text-gray-900 truncate">
                     {product.title}
                   </p>
-                  <p className="text-xs text-gray-400">{product.category?.name}</p>
+                  <p className="text-xs text-gray-400">
+                    {product.category?.name}
+                  </p>
                 </div>
               </div>
               <div className="flex justify-between items-center">
@@ -326,10 +367,14 @@ export default function AdminProductsPage() {
                   <p className="text-sm font-semibold text-gray-800">
                     PKR {(product.price * 278).toLocaleString()}
                   </p>
-                  <p className={`text-xs font-semibold ${
-                    product.stock === 0 ? "text-red-500" : "text-green-600"
-                  }`}>
-                    {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
+                  <p
+                    className={`text-xs font-semibold ${
+                      product.stock === 0 ? "text-red-500" : "text-green-600"
+                    }`}
+                  >
+                    {product.stock === 0
+                      ? "Out of Stock"
+                      : `${product.stock} units`}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -350,7 +395,6 @@ export default function AdminProductsPage() {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
