@@ -282,13 +282,9 @@ export default function AdminProductsPage() {
                 <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
                   {product.images?.[0] ? (
                     <img
-                      src={product.images?.[0] || "/placeholder.png"}
+                      src={product.images[0]}
                       alt={product.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://via.placeholder.com/100x100?text=No+Image";
-                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
@@ -343,13 +339,9 @@ export default function AdminProductsPage() {
                 <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                   {product.images?.[0] ? (
                     <img
-                      src={product.images?.[0] || "/placeholder.png"}
+                      src={product.images[0]}
                       alt={product.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src =
-                          "https://via.placeholder.com/100x100?text=No+Image";
-                      }}
                     />
                   ) : null}
                 </div>
