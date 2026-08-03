@@ -5,28 +5,55 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if ((session.user as any).role !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      );
     }
 
     await dbConnect();
-    const products = await Product.find()
-      .populate("category", "name")
-      .sort({ createdAt: -1 })
-      .lean();
 
-    return NextResponse.json({ success: true, products });
+    
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+
+    
+    const skip = (page - 1) * limit;
+
+  
+    const [products, totalProducts] = await Promise.all([
+      Product.find()
+        .populate("category", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(),
+    ]);
+
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    
+    return NextResponse.json({
+      success: true,
+      products,
+      totalPages,
+      currentPage: page,
+      totalProducts,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -34,7 +61,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if ((session.user as any).role !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      );
     }
 
     const body = await request.json();
@@ -43,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (!title || !price || !categoryName) {
       return NextResponse.json(
         { error: "Title, price and category are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,10 +109,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if ((session.user as any).role !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      );
     }
 
-    const { productId, title, description, price, stock, image, categoryName } = await request.json();
+    const { productId, title, description, price, stock, image, categoryName } =
+      await request.json();
 
     await dbConnect();
 
@@ -105,11 +139,9 @@ export async function PATCH(request: NextRequest) {
       updateData.category = category._id;
     }
 
-    const product = await Product.findByIdAndUpdate(
-      productId,
-      updateData,
-      { new: true }
-    );
+    const product = await Product.findByIdAndUpdate(productId, updateData, {
+      new: true,
+    });
 
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
@@ -124,7 +156,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if ((session.user as any).role !== "admin") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 },
+      );
     }
 
     const { productId } = await request.json();

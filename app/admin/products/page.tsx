@@ -49,7 +49,7 @@ function FormFields({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Product title"
           required
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         />
       </div>
       <div>
@@ -58,7 +58,7 @@ function FormFields({
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
           required
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         >
           <option value="">Select category</option>
           <option value="Electronics">Electronics</option>
@@ -75,7 +75,7 @@ function FormFields({
           onChange={(e) => setPrice(e.target.value)}
           placeholder="0.00"
           required
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         />
       </div>
       <div>
@@ -85,7 +85,7 @@ function FormFields({
           value={stock}
           onChange={(e) => setStock(e.target.value)}
           placeholder="0"
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         />
       </div>
       <div className="sm:col-span-2">
@@ -95,22 +95,16 @@ function FormFields({
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
           />
           {uploadingImage && (
-            <span className="text-xs text-indigo-600 font-semibold shrink-0">
-              Uploading...
-            </span>
+            <span className="text-xs text-[#2563EB] font-semibold shrink-0">Uploading...</span>
           )}
         </div>
         {image && (
           <div className="mt-2 flex items-center gap-2">
-            <img
-              src={image}
-              alt="Preview"
-              className="w-16 h-16 rounded-lg object-cover border border-gray-200"
-            />
-            <p className="text-xs text-green-600 font-semibold">✓ Image uploaded</p>
+            <img src={image} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+            <p className="text-xs text-[#10B981] font-semibold">✓ Image uploaded</p>
           </div>
         )}
       </div>
@@ -121,7 +115,7 @@ function FormFields({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Product description"
           rows={3}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         />
       </div>
     </div>
@@ -137,6 +131,11 @@ export default function AdminProductsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -155,15 +154,19 @@ export default function AdminProductsPage() {
         router.push("/");
         return;
       }
-      fetchProducts();
+      fetchProducts(page);
     }
-  }, [session, status, router]);
+  }, [session, status, router, page]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (pageNumber: number) => {
     try {
-      const res = await fetch("/api/admin/products");
+      setLoading(true);
+      const res = await fetch(`/api/admin/products?page=${pageNumber}&limit=${limit}`);
       const data = await res.json();
-      if (data.success) setProducts(data.products);
+      if (data.success) {
+        setProducts(data.products);
+        if (data.totalPages) setTotalPages(data.totalPages);
+      }
     } catch (err) {
       console.error("Failed to fetch products:", err);
     } finally {
@@ -219,7 +222,7 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         resetForm();
-        fetchProducts();
+        fetchProducts(page);
       }
     } catch (err) {
       console.error("Failed to add product:", err);
@@ -243,7 +246,7 @@ export default function AdminProductsPage() {
       const data = await res.json();
       if (data.success) {
         resetForm();
-        fetchProducts();
+        fetchProducts(page);
       }
     } catch (err) {
       console.error("Failed to update product:", err);
@@ -279,10 +282,10 @@ export default function AdminProductsPage() {
     }
   };
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading products...</p>
+        <p className="text-gray-500 font-medium">Loading products...</p>
       </div>
     );
   }
@@ -301,30 +304,29 @@ export default function AdminProductsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
-
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-            <p className="text-sm text-gray-500 mt-1">{products.length} products</p>
+            <h1 className="text-2xl font-black text-gray-900">Product Management</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage store inventory items</p>
           </div>
           <button
             onClick={() => { setShowAddForm(!showAddForm); setEditingProduct(null); }}
-            className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition"
+            className="bg-[#2563EB] text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-xs"
           >
             {showAddForm ? "Cancel" : "+ Add Product"}
           </button>
         </div>
 
         {showAddForm && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Add New Product</h2>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-xs">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Product</h2>
             <form onSubmit={handleAdd}>
               <FormFields {...formProps} />
               <div className="mt-4">
                 <button
                   type="submit"
                   disabled={submitting || uploadingImage}
-                  className="bg-indigo-600 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                  className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
                 >
                   {submitting ? "Adding..." : "Add Product"}
                 </button>
@@ -333,14 +335,15 @@ export default function AdminProductsPage() {
           </div>
         )}
 
+        {/* Edit Modal with Reduced Opacity Background */}
         {editingProduct && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4 transition-all">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900">Edit Product</h2>
                 <button
                   onClick={resetForm}
-                  className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                  className="text-gray-400 hover:text-gray-600 text-xl font-bold transition"
                 >
                   ✕
                 </button>
@@ -351,14 +354,14 @@ export default function AdminProductsPage() {
                   <button
                     type="submit"
                     disabled={submitting || uploadingImage}
-                    className="bg-indigo-600 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                    className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
                   >
                     {submitting ? "Saving..." : "Update Product"}
                   </button>
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="border border-gray-200 text-gray-600 text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-gray-50 transition"
+                    className="border border-gray-200 text-gray-600 text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-50 transition"
                   >
                     Cancel
                   </button>
@@ -368,8 +371,8 @@ export default function AdminProductsPage() {
           </div>
         )}
 
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] bg-gray-100 border-b border-gray-200 px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+          <div className="grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] bg-gray-50/75 border-b border-gray-200 px-6 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Image</span>
             <span>Title</span>
             <span>Category</span>
@@ -378,96 +381,62 @@ export default function AdminProductsPage() {
             <span>Actions</span>
           </div>
           <div className="divide-y divide-gray-100">
-            {products.map((product, i) => (
-              <div
-                key={product._id}
-                className={`grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] px-6 py-4 items-center gap-2 hover:bg-gray-50 transition ${
-                  i % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
+            {products.map((product) => (
+              <div key={product._id} className="grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] px-6 py-4 items-center gap-2 hover:bg-gray-50/50 transition">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                   {product.images?.[0] ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.style.display = "none"; }}
-                    />
+                    <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                      No img
-                    </div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No img</div>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-gray-800 truncate">{product.title}</p>
+                <p className="text-sm font-bold text-gray-900 truncate">{product.title}</p>
                 <p className="text-xs text-gray-500">{product.category?.name}</p>
-                <p className="text-sm text-gray-800">PKR {(product.price * 278).toLocaleString()}</p>
-                <p className={`text-sm font-semibold ${product.stock === 0 ? "text-red-500" : "text-green-600"}`}>
+                <p className="text-sm text-gray-900 font-semibold">PKR {(product.price * 278).toLocaleString()}</p>
+                <p className={`text-sm font-bold ${product.stock === 0 ? "text-[#EF4444]" : "text-[#10B981]"}`}>
                   {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => openEditModal(product)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 border border-indigo-200 px-2 py-1.5 rounded-lg transition"
+                    className="text-xs font-semibold text-[#2563EB] hover:bg-blue-50 border border-blue-200 px-2.5 py-1.5 rounded-lg transition"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(product._id)}
-                    className="text-xs font-semibold text-red-500 hover:text-red-700 border border-red-200 px-2 py-1.5 rounded-lg transition"
+                    className="text-xs font-semibold text-[#EF4444] hover:bg-red-50 border border-red-200 px-2.5 py-1.5 rounded-lg transition"
                   >
                     Delete
                   </button>
                 </div>
               </div>
             ))}
+            {products.length === 0 && (
+              <div className="text-center py-12 text-gray-400 text-sm">No products found</div>
+            )}
           </div>
         </div>
 
-        <div className="md:hidden space-y-4">
-          {products.map((product) => (
-            <div key={product._id} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex gap-3 mb-3">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 shrink-0">
-                  {product.images?.[0] ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : null}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.title}</p>
-                  <p className="text-xs text-gray-400">{product.category?.name}</p>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">
-                    PKR {(product.price * 278).toLocaleString()}
-                  </p>
-                  <p className={`text-xs font-semibold ${product.stock === 0 ? "text-red-500" : "text-green-600"}`}>
-                    {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openEditModal(product)}
-                    className="text-xs font-semibold text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="text-xs font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-lg transition"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+        
+        <div className="flex items-center justify-between mt-6 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-xs">
+          <p className="text-xs text-gray-500 font-medium">Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages || 1}</span></p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              Next
+            </button>
+          </div>
         </div>
 
       </div>

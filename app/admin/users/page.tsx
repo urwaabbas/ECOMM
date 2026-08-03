@@ -24,6 +24,11 @@ export default function AdminUsersPage() {
   const [editRole, setEditRole] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -34,15 +39,19 @@ export default function AdminUsersPage() {
         router.push("/");
         return;
       }
-      fetchUsers();
+      fetchUsers(page);
     }
-  }, [session, status, router]);
+  }, [session, status, router, page]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (pageNumber: number) => {
     try {
-      const res = await fetch("/api/admin/users");
+      setLoading(true);
+      const res = await fetch(`/api/admin/users?page=${pageNumber}&limit=${limit}`);
       const data = await res.json();
-      if (data.success) setUsers(data.users);
+      if (data.success) {
+        setUsers(data.users);
+        if (data.totalPages) setTotalPages(data.totalPages);
+      }
     } catch (err) {
       console.error("Failed to fetch users:", err);
     } finally {
@@ -118,7 +127,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (data.success) {
         setUsers((prev) =>
-          prev.map((u) => u._id === userId ? { ...u, role: newRole } : u)
+          prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
         );
       }
     } catch (err) {
@@ -126,10 +135,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading users...</p>
+        <p className="text-gray-500 font-medium">Loading users...</p>
       </div>
     );
   }
@@ -137,21 +146,22 @@ export default function AdminUsersPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
-
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-          <p className="text-sm text-gray-500 mt-1">{users.length} registered users</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">User Management</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage system users and access roles</p>
+          </div>
         </div>
 
         {/* Edit Modal */}
         {editingUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4 transition-all">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
                 <button
                   onClick={() => setEditingUser(null)}
-                  className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                  className="text-gray-400 hover:text-gray-600 text-xl font-bold transition"
                 >
                   ✕
                 </button>
@@ -164,7 +174,7 @@ export default function AdminUsersPage() {
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                   />
                 </div>
                 <div>
@@ -174,7 +184,7 @@ export default function AdminUsersPage() {
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                   />
                 </div>
                 <div>
@@ -182,7 +192,7 @@ export default function AdminUsersPage() {
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
@@ -192,7 +202,7 @@ export default function AdminUsersPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 bg-indigo-600 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                    className="flex-1 bg-[#2563EB] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </button>
@@ -210,10 +220,10 @@ export default function AdminUsersPage() {
         )}
 
         {/* Desktop Table */}
-        <div className="hidden md:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-100 border-b border-gray-200">
+              <tr className="bg-gray-50/75 border-b border-gray-200">
                 <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Role</th>
@@ -222,31 +232,18 @@ export default function AdminUsersPage() {
                 <th className="text-left px-6 py-4 font-bold text-xs text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {users.map((user, i) => (
-                <tr
-                  key={user._id}
-                  className={`border-b border-gray-100 hover:bg-gray-50 transition ${
-                    i % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                  }`}
-                >
+            <tbody className="divide-y divide-gray-100">
+              {users.map((user) => (
+                <tr key={user._id} className="hover:bg-gray-50/50 transition">
                   <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">{user.email}</td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                      user.role === "admin"
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${user.role === "admin" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600"}`}>
                       {user.role.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                      user.isVerified
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-600"
-                    }`}>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${user.isVerified ? "bg-emerald-100 text-[#10B981]" : "bg-red-100 text-[#EF4444]"}`}>
                       {user.isVerified ? "Verified" : "Unverified"}
                     </span>
                   </td>
@@ -257,23 +254,19 @@ export default function AdminUsersPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => openEditModal(user)}
-                        className="text-xs font-semibold text-indigo-600 border border-indigo-200 px-2 py-1.5 rounded-lg hover:text-indigo-700 transition"
+                        className="text-xs font-semibold text-[#2563EB] border border-blue-200 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => updateRole(user._id, user.role === "admin" ? "user" : "admin")}
-                        className={`text-xs font-semibold px-2 py-1.5 rounded-lg border transition ${
-                          user.role === "admin"
-                            ? "text-red-500 border-red-200 hover:text-red-700"
-                            : "text-green-600 border-green-200 hover:text-green-700"
-                        }`}
+                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition ${user.role === "admin" ? "text-red-500 border-red-200 hover:bg-red-50" : "text-[#10B981] border-emerald-200 hover:bg-emerald-50"}`}
                       >
-                        {user.role === "admin" ? "Remove Admin" : "Make Admin"}
+                        {user.role === "admin" ? "Demote" : "Make Admin"}
                       </button>
                       <button
                         onClick={() => handleDelete(user._id)}
-                        className="text-xs font-semibold text-red-500 border border-red-200 px-2 py-1.5 rounded-lg hover:text-red-700 transition"
+                        className="text-xs font-semibold text-[#EF4444] border border-red-200 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition"
                       >
                         Delete
                       </button>
@@ -285,13 +278,13 @@ export default function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
+        {/* Mobile Cards (This was missing) */}
+        <div className="md:hidden space-y-4 mb-6">
           {users.map((user) => (
-            <div key={user._id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div key={user._id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs">
               <div className="flex justify-between items-start mb-2">
-                <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   user.role === "admin"
                     ? "bg-indigo-100 text-indigo-700"
                     : "bg-gray-100 text-gray-600"
@@ -299,42 +292,66 @@ export default function AdminUsersPage() {
                   {user.role.toUpperCase()}
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mb-3">{user.email}</p>
+              <p className="text-xs text-gray-500 mb-3">{user.email}</p>
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   user.isVerified
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-600"
+                    ? "bg-emerald-100 text-[#10B981]"
+                    : "bg-red-100 text-[#EF4444]"
                 }`}>
                   {user.isVerified ? "Verified" : "Unverified"}
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => openEditModal(user)}
-                    className="text-xs font-semibold text-indigo-600 border border-indigo-200 px-2 py-1.5 rounded-lg transition"
+                    className="text-[10px] font-semibold text-[#2563EB] border border-blue-200 px-2.5 py-1.5 rounded-lg transition"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => updateRole(user._id, user.role === "admin" ? "user" : "admin")}
-                    className={`text-xs font-semibold px-2 py-1.5 rounded-lg border transition ${
+                    className={`text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition ${
                       user.role === "admin"
                         ? "text-red-500 border-red-200"
-                        : "text-green-600 border-green-200"
+                        : "text-[#10B981] border-emerald-200"
                     }`}
                   >
-                    {user.role === "admin" ? "Remove Admin" : "Make Admin"}
+                    {user.role === "admin" ? "Demote" : "Admin"}
                   </button>
                   <button
                     onClick={() => handleDelete(user._id)}
-                    className="text-xs font-semibold text-red-500 border border-red-200 px-2 py-1.5 rounded-lg transition"
+                    className="text-[10px] font-semibold text-[#EF4444] border border-red-200 px-2.5 py-1.5 rounded-lg transition"
                   >
-                    Delete
+                    Del
                   </button>
                 </div>
               </div>
             </div>
           ))}
+          {users.length === 0 && (
+            <div className="text-center py-8 text-gray-400 text-sm">No users found</div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-6 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-xs">
+          <p className="text-xs text-gray-500 font-medium">Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages || 1}</span></p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-xs font-semibold border border-gray-200 rounded-lg bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition"
+            >
+              Next
+            </button>
+          </div>
         </div>
 
       </div>
