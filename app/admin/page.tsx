@@ -45,6 +45,15 @@ interface Stats {
   productsByCategory: { name: string; count: number }[];
 }
 
+interface AdminNotification {
+  _id: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 const PIE_COLORS = ["#f59e0b", "#10b981", "#2563eb", "#6366f1", "#ef4444"];
 
 export default function AdminDashboard() {
@@ -55,6 +64,11 @@ export default function AdminDashboard() {
   const [recentUsers, setRecentUsers] = useState<User[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [markingRead, setMarkingRead] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -73,23 +87,37 @@ export default function AdminDashboard() {
 
   const fetchAll = async () => {
     try {
-      const [statsRes, ordersRes, usersRes, productsRes] = await Promise.all([
-        fetch("/api/admin/stats"),
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/users"),
-        fetch("/api/admin/products"),
-      ]);
+      const [statsRes, ordersRes, usersRes, productsRes, notificationsRes] =
+        await Promise.all([
+          fetch("/api/admin/stats"),
+          fetch("/api/admin/orders"),
+          fetch("/api/admin/users"),
+          fetch("/api/admin/products"),
+          fetch("/api/admin/notifications", { cache: "no-store" }),
+        ]);
 
-      const [statsData, ordersData, usersData, productsData] = await Promise.all([
+      const [
+        statsData,
+        ordersData,
+        usersData,
+        productsData,
+        notificationsData,
+      ] = await Promise.all([
         statsRes.json(),
         ordersRes.json(),
         usersRes.json(),
         productsRes.json(),
+        notificationsRes.json(),
       ]);
 
       if (statsData.success) setStats(statsData.stats);
       if (ordersData.success) setRecentOrders(ordersData.orders.slice(0, 5));
       if (usersData.success) setRecentUsers(usersData.users.slice(0, 5));
+      if (notificationsData.success) {
+        setNotifications(notificationsData.notifications);
+        setUnreadCount(notificationsData.unreadCount);
+      }
+
       if (productsData.success) {
         const low = productsData.products
           .filter((p: Product) => p.stock <= 5)
@@ -101,6 +129,75 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch("/api/admin/notifications", {
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
+
+  const handleNotificationToggle = () => {
+    const nextState = !showNotifications;
+    setShowNotifications(nextState);
+
+    if (nextState) {
+      fetchNotifications();
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (unreadCount === 0 || markingRead) return;
+
+    try {
+      setMarkingRead(true);
+
+      const response = await fetch("/api/admin/notifications", {
+        method: "PATCH",
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setNotifications((current) =>
+          current.map((notification) => ({
+            ...notification,
+            isRead: true,
+          })),
+        );
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error("Failed to mark notifications as read:", error);
+    } finally {
+      setMarkingRead(false);
+    }
+  };
+
+  const formatNotificationTime = (createdAt: string) => {
+    const created = new Date(createdAt);
+    const difference = Date.now() - created.getTime();
+    const minutes = Math.floor(difference / 60000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} min${minutes === 1 ? "" : "s"} ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+
+    return created.toLocaleDateString();
   };
 
   const statusStyle: Record<string, string> = {
@@ -139,12 +236,74 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="relative w-9 h-9 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white"></span>
-          </button>
+          
+          {/* MODIFIED: Notification Button with Dropdown logic */}
+          <div className="relative">
+            <button 
+              onClick={handleNotificationToggle}
+              className="relative w-9 h-9 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#2563EB]/50"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-2 h-2 bg-[#EF4444] rounded-full ring-2 ring-white"></span>
+              )}
+            </button>
+
+            {/* NEW: Notification Dropdown Panel */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                <div className="px-4 py-3 border-b border-gray-50 flex justify-between items-center">
+                  <span className="font-bold text-sm text-gray-800">Notifications</span>
+                  <span className="text-xs bg-blue-50 text-[#2563EB] px-2 py-0.5 rounded-full font-semibold">{unreadCount} New</span>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification._id}
+                      className={`px-4 py-3 hover:bg-gray-50 border-b border-gray-50 transition ${
+                        notification.isRead ? "" : "bg-blue-50/30"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <p
+                          className={`text-sm ${
+                            notification.isRead
+                              ? "font-semibold text-gray-700"
+                              : "font-bold text-gray-900"
+                          }`}
+                        >
+                          {notification.title}
+                        </p>
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {formatNotificationTime(notification.createdAt)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-snug">
+                        {notification.message}
+                      </p>
+                    </div>
+                  ))}
+
+                  {notifications.length === 0 && (
+                    <div className="px-4 py-8 text-center text-sm text-gray-400">
+                      No notifications yet
+                    </div>
+                  )}
+                </div>
+                <div className="px-4 py-2 border-t border-gray-50 text-center">
+                  <button
+                    onClick={markAllAsRead}
+                    disabled={unreadCount === 0 || markingRead}
+                    className="text-xs font-semibold text-[#2563EB] hover:underline disabled:text-gray-400 disabled:no-underline"
+                  >
+                    {markingRead ? "Updating..." : "Mark all as read"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button className="relative w-9 h-9 bg-gray-50 border border-gray-200 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,10 +325,9 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      
+      {/* Rest of the dashboard content remains identical */}
       <div className="flex-1 p-8 max-w-[1600px] w-full mx-auto space-y-8">
         
-      
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight">Dashboard Overview</h1>
@@ -187,8 +345,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* ... [Rest of your beautiful grid items remain here without any changes] ... */}
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs hover:border-gray-300 transition group">
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Users</p>
@@ -260,9 +418,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-      
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Orders by Status</h2>
@@ -295,7 +451,6 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Products by Category</h2>
@@ -319,7 +474,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs flex flex-col">
             <div className="flex items-center justify-between mb-6">
@@ -368,7 +522,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          
           <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Low Stock Alerts</h2>
@@ -403,7 +556,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-      
         <div className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Recent Users</h2>

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import dbConnect from "@/lib/db";
 import Order from "@/models/Order";
 import Cart from "@/models/Cart";
+import Notification from "@/models/Notification";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -17,32 +18,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No signature" }, { status: 400 });
     }
 
-    let event;
+    let event: Stripe.Event;
+
     try {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        process.env.STRIPE_WEBHOOK_SECRET!,
       );
-    } catch (err) {
-      console.error("Webhook signature failed:", err);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    } catch (error) {
+      console.error("Webhook signature failed:", error);
+
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 400 },
+      );
     }
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-
       const userId = session.metadata?.userId;
+
       if (!userId) {
-        return NextResponse.json({ error: "No user ID" }, { status: 400 });
+        return NextResponse.json(
+          { error: "No user ID" },
+          { status: 400 },
+        );
       }
 
       await dbConnect();
 
+      const paymentId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id || session.id;
+
+      const existingOrder = await Order.findOne({ paymentId });
+
+      if (existingOrder) {
+        return NextResponse.json({ received: true });
+      }
+
       const cart = await Cart.findOne({ user: userId });
 
       if (cart && cart.items.length > 0) {
-        await Order.create({
+        const order = await Order.create({
           user: userId,
           items: cart.items,
           shippingInfo: {
@@ -56,20 +76,35 @@ export async function POST(request: NextRequest) {
           shipping: 0,
           total: session.amount_total ? session.amount_total / 100 : 0,
           status: "paid",
-          paymentId: session.payment_intent,
+          paymentId,
+        });
+
+        const totalPKR = Math.round(order.total * 278).toLocaleString("en-PK");
+
+        await Notification.create({
+          title: "New Order Received",
+          message: `${order.shippingInfo.name || "A customer"} placed an order worth PKR ${totalPKR}.`,
+          type: "new_order",
+          order: order._id,
         });
 
         cart.items = [];
         await cart.save();
 
-        console.log("✅ Order saved for user:", userId);
+        console.log("Order and notification saved for user:", userId);
       }
     }
 
     return NextResponse.json({ received: true });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Unknown webhook error";
 
-  } catch (error: any) {
-    console.error("Webhook error:", error.message);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    console.error("Webhook error:", message);
+
+    return NextResponse.json(
+      { error: "Webhook failed" },
+      { status: 500 },
+    );
   }
 }
