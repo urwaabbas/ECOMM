@@ -24,6 +24,10 @@ const UserSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    fcmToken: {
+      type: String,
+      default: null,
+    },
     verificationToken: {
       type: String,
       default: null,

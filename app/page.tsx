@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Newsletter from "@/components/Newsletter";
 
 const categories = [
   {
@@ -162,6 +163,7 @@ export default function HomePage() {
           Get Started
         </Link>
       </section>
+
     </div>
   );
 }

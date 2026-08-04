@@ -10,6 +10,15 @@ export default function Navbar() {
   const { cartCount, wishlistCount } = useShopping();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const getInitials = (name?: string | null) => {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -42,13 +51,25 @@ export default function Navbar() {
           >
             Orders
           </Link>
-          
+          <Link
+            href="/contact"
+            className="text-sm text-gray-600 hover:text-indigo-600 transition"
+          >
+            Contact
+          </Link>
 
           {session?.user ? (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-bold">
-                {session.user.name?.charAt(0).toUpperCase()}
-              </div>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 group"
+                title="Go to Profile"
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold group-hover:bg-indigo-700 transition">
+                  {getInitials(session.user.name)}
+                </div>
+              
+              </Link>
               <button
                 onClick={() => signOut()}
                 className="text-sm text-red-500 hover:text-red-700 transition"
@@ -140,26 +161,45 @@ export default function Navbar() {
           >
             Orders
           </Link>
+          <Link
+            href="/contact"
+            onClick={() => setMenuOpen(false)}
+            className="block text-sm text-gray-700 py-2 hover:text-indigo-600 transition"
+          >
+            Contact
+          </Link>
+          <Link
+            href="/profile"
+            onClick={() => setMenuOpen(false)}
+            className="block text-sm text-gray-700 py-2 hover:text-indigo-600 transition"
+          >
+            Profile
+          </Link>
           {(session?.user as any)?.role === "admin" && (
             <Link
               href="/admin"
-              className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition"
+              onClick={() => setMenuOpen(false)}
+              className="block text-sm font-semibold text-indigo-600 py-2 hover:text-indigo-700 transition"
             >
-              Admin
+              Admin Dashboard
             </Link>
           )}
 
           <div className="border-t border-gray-100 pt-3">
             {session?.user ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-sm font-bold">
-                    {session.user.name?.charAt(0).toUpperCase()}
+              <div className="flex items-center justify-between py-2">
+                <Link
+                  href="/profile"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold">
+                    {getInitials(session.user.name)}
                   </div>
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm font-medium text-gray-700">
                     {session.user.name}
                   </span>
-                </div>
+                </Link>
                 <button
                   onClick={() => {
                     signOut();
@@ -171,7 +211,7 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <Link
                   href="/login"
                   onClick={() => setMenuOpen(false)}

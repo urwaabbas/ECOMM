@@ -237,7 +237,7 @@ export const initialProducts = [
     stock: 14,
   },
 
-  // --- FITNESS ---
+
   {
     name: "Performance Athletic Trainers",
     description:
