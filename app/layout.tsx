@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import ShoppingProvider from "@/components/ShoppingProvider";
 import ConditionalLayout from "@/components/ConditionalLayout";
-import NotificationProvider from "@/components/NotificationProvider";
+
 
 export const metadata: Metadata = {
   title: "HAANLI BAZAAR",
@@ -20,7 +20,7 @@ export default function RootLayout({
       <body className="flex h-full flex-col font-sans text-gray-900">
         <Providers>
           <ShoppingProvider>
-            <NotificationProvider />
+          
             <ConditionalLayout>{children}</ConditionalLayout>
           </ShoppingProvider>
         </Providers>

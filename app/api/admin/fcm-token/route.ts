@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const token =
-      typeof body.token === "string" ? body.token.trim() : "";
+    const token = typeof body.token === "string" ? body.token.trim() : "";
 
     if (token.length < 20) {
       return NextResponse.json(
@@ -30,24 +29,10 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    await User.updateMany(
-      {
-        _id: { $ne: session.user.id },
-        fcmToken: token,
-      },
-      {
-        $set: { fcmToken: null },
-      },
-    );
-
     const user = await User.findByIdAndUpdate(
       session.user.id,
-      {
-        $set: { fcmToken: token },
-      },
-      {
-        new: true,
-      },
+      { $set: { fcmToken: token } },
+      { new: true },
     );
 
     if (!user) {

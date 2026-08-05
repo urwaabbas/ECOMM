@@ -26,6 +26,7 @@ export default function AdminOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -34,18 +35,23 @@ export default function AdminOrdersPage() {
     }
 
     if (status === "authenticated") {
-      if ((session?.user as any)?.role !== "admin") {
+      if (session?.user?.role !== "admin") {
         router.push("/");
         return;
       }
 
       const fetchOrders = async () => {
         try {
-          const res = await fetch("/api/admin/orders");
-          const data = await res.json();
-          if (data.success) setOrders(data.orders);
-        } catch (err) {
-          console.error("Failed to fetch orders:", err);
+          const response = await fetch("/api/admin/orders");
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.error || "Failed to fetch orders");
+          }
+
+          setOrders(data.orders);
+        } catch (error) {
+          console.error("Failed to fetch orders:", error);
         } finally {
           setLoading(false);
         }
@@ -56,22 +62,48 @@ export default function AdminOrdersPage() {
   }, [session, status, router]);
 
   const updateStatus = async (orderId: string, newStatus: string) => {
+    const currentOrder = orders.find((order) => order._id === orderId);
+
+    if (!currentOrder || currentOrder.status === newStatus) {
+      return;
+    }
+
     try {
-      const res = await fetch("/api/admin/orders", {
+      setUpdatingOrderId(orderId);
+
+      const response = await fetch("/api/admin/orders", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, status: newStatus }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId,
+          status: newStatus,
+        }),
       });
-      const data = await res.json();
-      if (data.success) {
-        setOrders((prev) =>
-          prev.map((o) =>
-            o._id === orderId ? { ...o, status: newStatus } : o
-          )
-        );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to update status");
       }
-    } catch (err) {
-      console.error("Failed to update status:", err);
+
+      setOrders((previousOrders) =>
+        previousOrders.map((order) =>
+          order._id === orderId
+            ? { ...order, status: data.order.status }
+            : order,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Order status could not be updated.",
+      );
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -86,25 +118,39 @@ export default function AdminOrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
-
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
-          <p className="text-sm text-gray-500 mt-1">{orders.length} total orders</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Order Management
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {orders.length} total orders
+          </p>
         </div>
 
-        {/* Status Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-          {["pending", "paid", "processing", "completed", "cancelled"].map((s) => (
-            <div key={s} className={`rounded-xl px-4 py-3 text-center ${statusStyle[s]}`}>
-              <p className="text-xs font-semibold uppercase tracking-wide">{s}</p>
-              <p className="text-2xl font-bold mt-1">
-                {orders.filter((o) => o.status === s).length}
-              </p>
-            </div>
-          ))}
+          {["pending", "paid", "processing", "completed", "cancelled"].map(
+            (orderStatus) => (
+              <div
+                key={orderStatus}
+                className={`rounded-xl px-4 py-3 text-center ${
+                  statusStyle[orderStatus]
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide">
+                  {orderStatus}
+                </p>
+                <p className="text-2xl font-bold mt-1">
+                  {
+                    orders.filter(
+                      (order) => order.status === orderStatus,
+                    ).length
+                  }
+                </p>
+              </div>
+            ),
+          )}
         </div>
 
-        
         <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div className="grid grid-cols-[1fr_1.2fr_2fr_1fr_1.2fr] bg-gray-100 border-b border-gray-200 px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Order ID</span>
@@ -115,11 +161,11 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {orders.map((order, i) => (
+            {orders.map((order, index) => (
               <div
                 key={order._id}
                 className={`grid grid-cols-[1fr_1.2fr_2fr_1fr_1.2fr] px-6 py-4 items-center gap-2 hover:bg-gray-50 transition ${
-                  i % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
                 }`}
               >
                 <div>
@@ -130,6 +176,7 @@ export default function AdminOrdersPage() {
                     {new Date(order.createdAt).toLocaleDateString()}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-sm font-semibold text-gray-800 truncate">
                     {order.user?.name || "Guest User"}
@@ -138,21 +185,31 @@ export default function AdminOrdersPage() {
                     {order.user?.email}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-xs text-gray-600 line-clamp-2">
-                    {order.items.map((i) => `${i.title} x${i.quantity}`).join(", ")}
+                    {order.items
+                      .map((item) => `${item.title} x${item.quantity}`)
+                      .join(", ")}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-sm font-semibold text-gray-800">
                     PKR {(order.total * 278).toLocaleString()}
                   </p>
                 </div>
+
                 <div>
                   <select
                     value={order.status}
-                    onChange={(e) => updateStatus(order._id, e.target.value)}
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer ${statusStyle[order.status]}`}
+                    disabled={updatingOrderId === order._id}
+                    onChange={(event) =>
+                      updateStatus(order._id, event.target.value)
+                    }
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer disabled:opacity-50 ${
+                      statusStyle[order.status]
+                    }`}
                   >
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
@@ -166,10 +223,12 @@ export default function AdminOrdersPage() {
           </div>
         </div>
 
-    
         <div className="md:hidden space-y-4">
           {orders.map((order) => (
-            <div key={order._id} className="bg-white rounded-xl border border-gray-200 p-4">
+            <div
+              key={order._id}
+              className="bg-white rounded-xl border border-gray-200 p-4"
+            >
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="text-xs font-mono font-bold text-gray-700">
@@ -179,10 +238,16 @@ export default function AdminOrdersPage() {
                     {new Date(order.createdAt).toLocaleDateString()}
                   </p>
                 </div>
+
                 <select
                   value={order.status}
-                  onChange={(e) => updateStatus(order._id, e.target.value)}
-                  className={`text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none ${statusStyle[order.status]}`}
+                  disabled={updatingOrderId === order._id}
+                  onChange={(event) =>
+                    updateStatus(order._id, event.target.value)
+                  }
+                  className={`text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none disabled:opacity-50 ${
+                    statusStyle[order.status]
+                  }`}
                 >
                   <option value="pending">Pending</option>
                   <option value="paid">Paid</option>
@@ -191,12 +256,17 @@ export default function AdminOrdersPage() {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+
               <p className="text-sm font-semibold text-gray-800">
                 {order.user?.name || "Guest User"}
               </p>
-              <p className="text-xs text-gray-400 mb-2">{order.user?.email}</p>
+              <p className="text-xs text-gray-400 mb-2">
+                {order.user?.email}
+              </p>
               <p className="text-xs text-gray-600 mb-3">
-                {order.items.map((i) => `${i.title} x${i.quantity}`).join(", ")}
+                {order.items
+                  .map((item) => `${item.title} x${item.quantity}`)
+                  .join(", ")}
               </p>
               <p className="text-sm font-bold text-indigo-600">
                 PKR {(order.total * 278).toLocaleString()}
@@ -204,7 +274,6 @@ export default function AdminOrdersPage() {
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );

@@ -59,7 +59,6 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -80,14 +79,17 @@ export default function ProductDetailPage() {
     );
   }
 
-
   if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white border border-red-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
           <div className="text-4xl mb-4"> </div>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">Product Not Found</h2>
-          <p className="text-sm text-red-600 mb-6">{error || "Item was not found."}</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">
+            Product Not Found
+          </h2>
+          <p className="text-sm text-red-600 mb-6">
+            {error || "Item was not found."}
+          </p>
           <Link
             href="/products"
             className="inline-block bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition"
@@ -102,8 +104,6 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-
         <nav className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-8">
           <Link href="/products" className="hover:text-indigo-600 transition">
             Catalog
@@ -111,25 +111,22 @@ export default function ProductDetailPage() {
           <span>/</span>
           <span className="text-gray-500">{product.category.name}</span>
           <span>/</span>
-          <span className="text-gray-700 truncate max-w-[200px]">{product.title}</span>
+          <span className="text-gray-700 truncate max-w-[200px]">
+            {product.title}
+          </span>
         </nav>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-
-
             <div className="bg-gray-50 p-6 border-r border-gray-100">
-
               <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white border border-gray-100">
                 <Image
                   src={activeImage}
                   alt={product.title}
-                  fill
                   className="object-cover"
                   priority
                 />
               </div>
-
 
               {product.images.length > 1 && (
                 <div className="flex gap-3 mt-4 flex-wrap">
@@ -146,7 +143,6 @@ export default function ProductDetailPage() {
                       <Image
                         src={img}
                         alt={`${product.title} thumbnail ${i + 1}`}
-                        fill
                         className="object-cover"
                       />
                     </button>
@@ -155,10 +151,7 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-
             <div className="p-8 flex flex-col gap-6">
-
-
               <div>
                 <span className="inline-block bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">
                   {product.category.name}
@@ -180,7 +173,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-
               <div className="flex items-baseline gap-3 py-4 border-y border-gray-100">
                 <span className="text-3xl font-black text-gray-900">
                   {formatPricePKR(product.discountPrice || product.price)}
@@ -193,12 +185,14 @@ export default function ProductDetailPage() {
                 {product.discountPrice && (
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                     {Math.round(
-                      ((product.price - product.discountPrice) / product.price) * 100
-                    )}% OFF
+                      ((product.price - product.discountPrice) /
+                        product.price) *
+                        100,
+                    )}
+                    % OFF
                   </span>
                 )}
               </div>
-
 
               <div>
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
@@ -208,7 +202,6 @@ export default function ProductDetailPage() {
                   {product.description}
                 </p>
               </div>
-
 
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-gray-500">
@@ -240,7 +233,6 @@ export default function ProductDetailPage() {
                 />
               </div>
 
-        
               <Link
                 href="/products"
                 className="text-xs text-gray-400 hover:text-indigo-600 transition text-center"

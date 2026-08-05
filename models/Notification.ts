@@ -19,6 +19,7 @@ const NotificationSchema = new Schema(
         "order_update",
         "low_stock",
         "promotion",
+        "contact",
         "system",
       ],
       default: "system",
