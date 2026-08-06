@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import {
-  getBrowserFcmToken,
-  subscribeToForegroundMessages,
-} from "@/lib/fcm";
+import { getBrowserFcmToken, subscribeToForegroundMessages } from "@/lib/fcm";
 
 interface ToastNotification {
   title: string;
@@ -17,14 +14,16 @@ interface ToastNotification {
 export default function NotificationManager() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [showPermissionPrompt, setShowPermissionPrompt] =
-    useState(false);
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [enabling, setEnabling] = useState(false);
   const [toast, setToast] = useState<ToastNotification | null>(null);
+  const toastRef = useRef<((t: ToastNotification) => void) | null>(null);
 
-  const userId = (
-    session?.user as { id?: string } | undefined
-  )?.id;
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+
+  toastRef.current = (t: ToastNotification) => {
+    setToast(t);
+  };
 
   const saveToken = async (token: string) => {
     if (!userId) {
@@ -81,10 +80,7 @@ export default function NotificationManager() {
       return;
     }
 
-    if (
-      typeof window === "undefined" ||
-      !("Notification" in window)
-    ) {
+    if (typeof window === "undefined" || !("Notification" in window)) {
       return;
     }
 
@@ -112,13 +108,15 @@ export default function NotificationManager() {
     let unsubscribe: (() => void) | null = null;
 
     subscribeToForegroundMessages((payload) => {
+      console.log("FCM payload received:", payload);
       const data = payload.data || {};
+      const title = data.title || "Haanli Bazaar";
+      const message = data.body || "You have a new notification.";
+      const link = data.link || "/";
 
-      setToast({
-        title: data.title || "Haanli Bazaar",
-        message: data.body || "You have a new notification.",
-        link: data.link || "/",
-      });
+      if (toastRef.current) {
+        toastRef.current({ title, message, link });
+      }
     }).then((listener) => {
       unsubscribe = listener;
     });
@@ -178,9 +176,7 @@ export default function NotificationManager() {
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-gray-900">
-                {toast.title}
-              </p>
+              <p className="text-sm font-bold text-gray-900">{toast.title}</p>
               <p className="mt-1 text-xs leading-5 text-gray-600">
                 {toast.message}
               </p>

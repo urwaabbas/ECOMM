@@ -13,7 +13,8 @@ export async function GET() {
 
     await connectDB();
     const user = await User.findById(session.user.id).select("-passwordHash");
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!user)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     return NextResponse.json(user);
   } catch (error) {
@@ -29,12 +30,18 @@ export async function PATCH(req: Request) {
     }
 
     const { name, email } = await req.json();
+    if (!name || !email) {
+      return NextResponse.json(
+        { error: "Name and email are required" },
+        { status: 400 },
+      );
+    }
     await connectDB();
 
     const updatedUser = await User.findByIdAndUpdate(
       session.user.id,
       { name, email },
-      { new: true }
+      { new: true },
     ).select("-passwordHash");
 
     return NextResponse.json({ success: true, user: updatedUser });

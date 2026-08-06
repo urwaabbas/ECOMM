@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SessionProvider } from "next-auth/react";
+import NotificationManager from "@/components/NotificationManager";
 
 export default function Providers({
   children,
@@ -11,6 +12,7 @@ export default function Providers({
   return (
     <SessionProvider>
       {children}
+      <NotificationManager />
     </SessionProvider>
   );
 }

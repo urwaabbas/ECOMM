@@ -5,13 +5,15 @@ import { useState } from "react";
 export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    
+
     setStatus("loading");
-    
+    setErrorMsg("");
+
     try {
       const res = await fetch("/api/newsletter", {
         method: "POST",
@@ -19,12 +21,17 @@ export default function Newsletter() {
         body: JSON.stringify({ email }),
       });
 
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong.");
+      }
 
       setStatus("success");
       setEmail("");
-    } catch (error) {
+    } catch (err: any) {
       setStatus("error");
+      setErrorMsg(err.message);
     }
   };
 
@@ -33,7 +40,7 @@ export default function Newsletter() {
       <div className="mx-auto max-w-2xl px-4">
         <h2 className="text-2xl font-bold text-white">Subscribe to our Newsletter</h2>
         <p className="mt-2 text-sm text-gray-400">Get real-time updates and promotional offers directly to your inbox.</p>
-        
+
         <form onSubmit={handleSubscribe} className="mt-6 flex justify-center gap-3">
           <input
             type="email"
@@ -56,7 +63,7 @@ export default function Newsletter() {
           <p className="mt-3 text-sm font-medium text-green-500">Successfully subscribed to the newsletter!</p>
         )}
         {status === "error" && (
-          <p className="mt-3 text-sm font-medium text-red-500">Something went wrong. Please try again.</p>
+          <p className="mt-3 text-sm font-medium text-red-500">{errorMsg}</p>
         )}
       </div>
     </div>

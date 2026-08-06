@@ -4,6 +4,24 @@ This is a clean overview of the main folders and files in the project.
 
 ```text
 Ecomm/
+├── .env
+├── .gitattributes
+├── .gitignore
+├── AGENTS.md
+├── CLAUDE.md
+├── README.md
+├── package-lock.json
+├── package.json
+├── next-env.d.ts
+├── next.config.ts
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+├── eslint.config.mjs
+├── postcss.config.mjs
+├── structure.md
+├── tmp_products.json
+├── tmp_products_filter.json
+├── tmp_products_filter2.json
 ├── app/
 │   ├── admin/
 │   │   ├── layout.tsx
@@ -18,42 +36,54 @@ Ecomm/
 │   │   ├── cart/
 │   │   ├── categories/
 │   │   ├── checkout/
+│   │   ├── contact/
 │   │   ├── forgot-password/
+│   │   ├── newsletter/
+│   │   ├── notifications/
 │   │   ├── orders/
 │   │   ├── products/
 │   │   ├── register/
 │   │   ├── reset-password/
 │   │   ├── seed/
+│   │   ├── test-email/
 │   │   ├── upload/
+│   │   ├── user/
 │   │   ├── verify-email/
 │   │   ├── webhook/
 │   │   └── wishlist/
 │   ├── cart/
 │   ├── checkout/
+│   ├── contact/
+│   ├── favicon.ico
 │   ├── forgot-password/
+│   ├── globals.css
+│   ├── layout.tsx
 │   ├── login/
 │   ├── orders/
+│   ├── page.tsx
 │   ├── payment/
 │   │   ├── fail/
 │   │   └── success/
 │   ├── products/
 │   │   └── [id]/
+│   ├── profile/
 │   ├── register/
 │   ├── reset-password/
-│   ├── wishlist/
-│   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
+│   └── wishlist/
 ├── components/
 │   ├── AdminSidebar.tsx
+│   ├── ChatBox.tsx
 │   ├── ConditionalLayout.tsx
 │   ├── Footer.tsx
 │   ├── Navbar.tsx
+│   ├── Newsletter.tsx
+│   ├── NotificationManager.tsx
 │   ├── ProductCard.tsx
 │   ├── ProductGrid.tsx
 │   ├── Providers.tsx
 │   ├── ShoppingActions.tsx
-│   └── ShoppingProvider.tsx
+│   ├── ShoppingProvider.tsx
+│   └── UserNotificationBell.tsx
 ├── config/
 ├── controllers/
 │   ├── auth.controller.ts
@@ -64,20 +94,27 @@ Ecomm/
 │   ├── bcrypt.ts
 │   ├── db.ts
 │   ├── email.ts
+│   ├── fcm.ts
+│   ├── firebase-admin.ts
+│   ├── firebase.ts
 │   ├── invoice.ts
 │   ├── product-image.ts
+│   ├── push-notification.ts
 │   └── seed.ts
 ├── middleware/
 │   └── middleware.ts
 ├── models/
 │   ├── Cart.ts
 │   ├── Category.ts
+│   ├── Contact.ts
+│   ├── Newsletter.ts
+│   ├── Notification.ts
 │   ├── Order.ts
 │   ├── Product.ts
 │   ├── User.ts
 │   └── Wishlist.ts
 ├── public/
-│   └── images.jfif
+│   └── firebase-messaging-sw.js
 ├── services/
 │   ├── auth.service.ts
 │   ├── category.service.ts
@@ -85,13 +122,6 @@ Ecomm/
 ├── types/
 │   └── next-auth.d.ts
 ├── validations/
-├── package.json
-├── next.config.ts
-├── tsconfig.json
-├── eslint.config.mjs
-├── postcss.config.mjs
-├── README.md
-└── tmp_products*.json
 ```
 
 ## What each folder is for
