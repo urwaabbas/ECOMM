@@ -37,7 +37,13 @@ export default function AdminChatPage() {
   const [selectedUserName, setSelectedUserName] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const filteredChatUsers = chatUsers.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    return user.userName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -179,18 +185,37 @@ export default function AdminChatPage() {
         <div className="border-b border-gray-100 px-4 py-4">
           <h1 className="text-lg font-bold text-gray-900">Customer Chats</h1>
           <p className="text-xs text-gray-400">
-            {chatUsers.length} conversations
+            {filteredChatUsers.length} of {chatUsers.length} conversations
           </p>
         </div>
 
+        <div className="px-3 py-2 border-b border-gray-100">
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search users..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-xs text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-400 transition"
+            />
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto">
-          {chatUsers.length === 0 && (
+          {filteredChatUsers.length === 0 && (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-gray-400">No chats yet</p>
+              <p className="text-sm text-gray-400">
+                {searchQuery ? "No users match your search" : "No chats yet"}
+              </p>
             </div>
           )}
 
-          {chatUsers.map((user) => (
+          {filteredChatUsers.map((user) => (
             <button
               key={user.userId}
               type="button"
@@ -259,18 +284,8 @@ export default function AdminChatPage() {
                 onClick={handleBack}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition md:hidden"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
 
@@ -278,9 +293,7 @@ export default function AdminChatPage() {
                 {selectedUserName.charAt(0).toUpperCase()}
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900">
-                  {selectedUserName}
-                </p>
+                <p className="text-sm font-bold text-gray-900">{selectedUserName}</p>
                 <p className="text-xs text-gray-400">Customer</p>
               </div>
             </div>
@@ -289,9 +302,7 @@ export default function AdminChatPage() {
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`flex ${
-                    m.sender === "admin" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${m.sender === "admin" ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`max-w-sm rounded-xl px-4 py-2 text-sm ${

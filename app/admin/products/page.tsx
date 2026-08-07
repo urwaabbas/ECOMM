@@ -1,8 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Product {
   _id: string;
@@ -122,19 +122,21 @@ function FormFields({
   );
 }
 
-export default function AdminProductsPage() {
+function AdminProductsPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLDivElement>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-
-  
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const limit = 10;
 
   const [title, setTitle] = useState("");
@@ -157,6 +159,25 @@ export default function AdminProductsPage() {
       fetchProducts(page);
     }
   }, [session, status, router, page]);
+
+  useEffect(() => {
+    if (!highlightId || products.length === 0) return;
+    const timer = setTimeout(() => {
+      if (highlightRef.current) {
+        highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightId, products]);
+
+  const filteredProducts = products.filter((product) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      product.title.toLowerCase().includes(q) ||
+      (product.category?.name || "").toLowerCase().includes(q)
+    );
+  });
 
   const fetchProducts = async (pageNumber: number) => {
     try {
@@ -192,10 +213,7 @@ export default function AdminProductsPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) {
         setImage(data.url);
@@ -307,7 +325,9 @@ export default function AdminProductsPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-black text-gray-900">Product Management</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage store inventory items</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {filteredProducts.length} of {products.length} products
+            </p>
           </div>
           <button
             onClick={() => { setShowAddForm(!showAddForm); setEditingProduct(null); }}
@@ -326,7 +346,7 @@ export default function AdminProductsPage() {
                 <button
                   type="submit"
                   disabled={submitting || uploadingImage}
-                  className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
+                  className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
                 >
                   {submitting ? "Adding..." : "Add Product"}
                 </button>
@@ -335,9 +355,8 @@ export default function AdminProductsPage() {
           </div>
         )}
 
-        {/* Edit Modal with Reduced Opacity Background */}
         {editingProduct && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4 transition-all">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900">Edit Product</h2>
@@ -354,7 +373,7 @@ export default function AdminProductsPage() {
                   <button
                     type="submit"
                     disabled={submitting || uploadingImage}
-                    className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
+                    className="bg-[#2563EB] text-white text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
                   >
                     {submitting ? "Saving..." : "Update Product"}
                   </button>
@@ -371,6 +390,21 @@ export default function AdminProductsPage() {
           </div>
         )}
 
+        <div className="mb-4 relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by product title or category..."
+            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+          />
+        </div>
+
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
           <div className="grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] bg-gray-50/75 border-b border-gray-200 px-6 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider">
             <span>Image</span>
@@ -381,8 +415,21 @@ export default function AdminProductsPage() {
             <span>Actions</span>
           </div>
           <div className="divide-y divide-gray-100">
-            {products.map((product) => (
-              <div key={product._id} className="grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] px-6 py-4 items-center gap-2 hover:bg-gray-50/50 transition">
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                No products match your search
+              </div>
+            )}
+            {filteredProducts.map((product) => (
+              <div
+                key={product._id}
+                ref={highlightId === product._id ? highlightRef : null}
+                className={`grid grid-cols-[80px_2fr_1fr_1fr_1fr_120px] px-6 py-4 items-center gap-2 hover:bg-gray-50/50 transition ${
+                  highlightId === product._id
+                    ? "bg-indigo-50 border-l-4 border-indigo-500"
+                    : ""
+                }`}
+              >
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                   {product.images?.[0] ? (
                     <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
@@ -392,7 +439,9 @@ export default function AdminProductsPage() {
                 </div>
                 <p className="text-sm font-bold text-gray-900 truncate">{product.title}</p>
                 <p className="text-xs text-gray-500">{product.category?.name}</p>
-                <p className="text-sm text-gray-900 font-semibold">PKR {(product.price * 278).toLocaleString()}</p>
+                <p className="text-sm text-gray-900 font-semibold">
+                  PKR {(product.price * 278).toLocaleString()}
+                </p>
                 <p className={`text-sm font-bold ${product.stock === 0 ? "text-[#EF4444]" : "text-[#10B981]"}`}>
                   {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
                 </p>
@@ -412,15 +461,14 @@ export default function AdminProductsPage() {
                 </div>
               </div>
             ))}
-            {products.length === 0 && (
-              <div className="text-center py-12 text-gray-400 text-sm">No products found</div>
-            )}
           </div>
         </div>
 
-        
         <div className="flex items-center justify-between mt-6 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-xs">
-          <p className="text-xs text-gray-500 font-medium">Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages || 1}</span></p>
+          <p className="text-xs text-gray-500 font-medium">
+            Page <span className="font-bold text-gray-900">{page}</span> of{" "}
+            <span className="font-bold text-gray-900">{totalPages || 1}</span>
+          </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
@@ -438,8 +486,15 @@ export default function AdminProductsPage() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense>
+      <AdminProductsPageContent />
+    </Suspense>
   );
 }

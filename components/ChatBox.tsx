@@ -116,7 +116,7 @@ export default function ChatBox() {
   return (
     <div className="fixed bottom-5 right-5 z-[200]">
       {open && (
-        <div className="mb-3 flex w-80 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+        <div className="mb-3 flex w-[calc(100vw-2.5rem)] md:w-80 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
           <div className="flex items-center justify-between bg-indigo-600 px-4 py-3">
             <div>
               <p className="text-sm font-bold text-white">Haanli Bazaar Support</p>
@@ -133,7 +133,7 @@ export default function ChatBox() {
             </button>
           </div>
 
-          <div className="flex h-72 flex-col gap-2 overflow-y-auto p-4">
+          <div className="flex h-60 md:h-72 flex-col gap-2 overflow-y-auto p-4"> 
             {messages.length === 0 && (
               <div className="flex h-full items-center justify-center">
                 <p className="text-center text-sm text-gray-400">

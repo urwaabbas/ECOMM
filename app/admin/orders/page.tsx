@@ -1,8 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Order {
   _id: string;
@@ -21,12 +21,16 @@ const statusStyle: Record<string, string> = {
   cancelled: "bg-red-100 text-red-600",
 };
 
-export default function AdminOrdersPage() {
+function AdminOrdersPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLDivElement>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -61,6 +65,33 @@ export default function AdminOrdersPage() {
     }
   }, [session, status, router]);
 
+  useEffect(() => {
+    if (!highlightId || orders.length === 0) return;
+
+    const timer = setTimeout(() => {
+      if (highlightRef.current) {
+        highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [highlightId, orders]);
+
+  const filteredOrders = orders.filter((order) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const shortId = order._id.slice(-6).toUpperCase();
+    const fullId = order._id.toUpperCase();
+    const name = (order.user?.name || "").toLowerCase();
+    const email = (order.user?.email || "").toLowerCase();
+    return (
+      shortId.includes(q.toUpperCase()) ||
+      fullId.includes(q.toUpperCase()) ||
+      name.includes(q) ||
+      email.includes(q)
+    );
+  });
+
   const updateStatus = async (orderId: string, newStatus: string) => {
     const currentOrder = orders.find((order) => order._id === orderId);
 
@@ -73,13 +104,8 @@ export default function AdminOrdersPage() {
 
       const response = await fetch("/api/admin/orders", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId,
-          status: newStatus,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: newStatus }),
       });
 
       const data = await response.json();
@@ -119,36 +145,43 @@ export default function AdminOrdersPage() {
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Order Management
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Order Management</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {orders.length} total orders
+            {filteredOrders.length} of {orders.length} orders
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           {["pending", "paid", "processing", "completed", "cancelled"].map(
             (orderStatus) => (
               <div
                 key={orderStatus}
-                className={`rounded-xl px-4 py-3 text-center ${
-                  statusStyle[orderStatus]
-                }`}
+                className={`rounded-xl px-4 py-3 text-center ${statusStyle[orderStatus]}`}
               >
                 <p className="text-xs font-semibold uppercase tracking-wide">
                   {orderStatus}
                 </p>
                 <p className="text-2xl font-bold mt-1">
-                  {
-                    orders.filter(
-                      (order) => order.status === orderStatus,
-                    ).length
-                  }
+                  {orders.filter((order) => order.status === orderStatus).length}
                 </p>
               </div>
             ),
           )}
+        </div>
+
+        <div className="mb-4 relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by order ID, customer name or email..."
+            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+          />
         </div>
 
         <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -161,11 +194,21 @@ export default function AdminOrdersPage() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {orders.map((order, index) => (
+            {filteredOrders.length === 0 && (
+              <div className="text-center py-10 text-gray-400 text-sm">
+                No orders match your search
+              </div>
+            )}
+            {filteredOrders.map((order, index) => (
               <div
                 key={order._id}
+                ref={highlightId === order._id ? highlightRef : null}
                 className={`grid grid-cols-[1fr_1.2fr_2fr_1fr_1.2fr] px-6 py-4 items-center gap-2 hover:bg-gray-50 transition ${
-                  index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                  highlightId === order._id
+                    ? "bg-indigo-50 border-l-4 border-indigo-500"
+                    : index % 2 === 0
+                    ? "bg-white"
+                    : "bg-gray-50/50"
                 }`}
               >
                 <div>
@@ -207,9 +250,7 @@ export default function AdminOrdersPage() {
                     onChange={(event) =>
                       updateStatus(order._id, event.target.value)
                     }
-                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer disabled:opacity-50 ${
-                      statusStyle[order.status]
-                    }`}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer disabled:opacity-50 ${statusStyle[order.status]}`}
                   >
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
@@ -224,10 +265,20 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="md:hidden space-y-4">
-          {orders.map((order) => (
+          {filteredOrders.length === 0 && (
+            <div className="text-center py-10 text-gray-400 text-sm">
+              No orders match your search
+            </div>
+          )}
+          {filteredOrders.map((order) => (
             <div
               key={order._id}
-              className="bg-white rounded-xl border border-gray-200 p-4"
+              ref={highlightId === order._id ? highlightRef : null}
+              className={`rounded-xl border p-4 ${
+                highlightId === order._id
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "bg-white border-gray-200"
+              }`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
@@ -245,9 +296,7 @@ export default function AdminOrdersPage() {
                   onChange={(event) =>
                     updateStatus(order._id, event.target.value)
                   }
-                  className={`text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none disabled:opacity-50 ${
-                    statusStyle[order.status]
-                  }`}
+                  className={`text-xs font-semibold px-2 py-1 rounded-lg focus:outline-none disabled:opacity-50 ${statusStyle[order.status]}`}
                 >
                   <option value="pending">Pending</option>
                   <option value="paid">Paid</option>
@@ -260,9 +309,7 @@ export default function AdminOrdersPage() {
               <p className="text-sm font-semibold text-gray-800">
                 {order.user?.name || "Guest User"}
               </p>
-              <p className="text-xs text-gray-400 mb-2">
-                {order.user?.email}
-              </p>
+              <p className="text-xs text-gray-400 mb-2">{order.user?.email}</p>
               <p className="text-xs text-gray-600 mb-3">
                 {order.items
                   .map((item) => `${item.title} x${item.quantity}`)
@@ -276,5 +323,13 @@ export default function AdminOrdersPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminOrdersPage() {
+  return (
+    <Suspense>
+      <AdminOrdersPageContent />
+    </Suspense>
   );
 }

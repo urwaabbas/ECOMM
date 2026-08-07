@@ -1,8 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface User {
   _id: string;
@@ -13,9 +13,12 @@ interface User {
   createdAt: string;
 }
 
-export default function AdminUsersPage() {
+function AdminUsersPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("highlight");
+  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -23,10 +26,9 @@ export default function AdminUsersPage() {
   const [editEmail, setEditEmail] = useState("");
   const [editRole, setEditRole] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  // Pagination states
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const limit = 10;
 
   useEffect(() => {
@@ -42,6 +44,25 @@ export default function AdminUsersPage() {
       fetchUsers(page);
     }
   }, [session, status, router, page]);
+
+  useEffect(() => {
+    if (!highlightId || users.length === 0) return;
+    const timer = setTimeout(() => {
+      if (highlightRef.current) {
+        highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightId, users]);
+
+  const filteredUsers = users.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      user.name.toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q)
+    );
+  });
 
   const fetchUsers = async (pageNumber: number) => {
     try {
@@ -86,8 +107,8 @@ export default function AdminUsersPage() {
           prev.map((u) =>
             u._id === editingUser?._id
               ? { ...u, name: editName, email: editEmail, role: editRole }
-              : u
-          )
+              : u,
+          ),
         );
         setEditingUser(null);
       }
@@ -127,7 +148,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (data.success) {
         setUsers((prev) =>
-          prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u))
+          prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u)),
         );
       }
     } catch (err) {
@@ -149,13 +170,14 @@ export default function AdminUsersPage() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-gray-900">User Management</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage system users and access roles</p>
+            <p className="text-sm text-gray-500 mt-1">
+              {filteredUsers.length} of {users.length} users
+            </p>
           </div>
         </div>
 
-        {/* Edit Modal */}
         {editingUser && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4 transition-all">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 px-4">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900">Edit User</h2>
@@ -202,7 +224,7 @@ export default function AdminUsersPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 bg-[#2563EB] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
+                    className="flex-1 bg-[#2563EB] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </button>
@@ -219,7 +241,21 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* Desktop Table */}
+        <div className="mb-4 relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or email..."
+            className="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition"
+          />
+        </div>
+
         <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
           <table className="w-full text-sm">
             <thead>
@@ -233,8 +269,21 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50/50 transition">
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-gray-400 text-sm">
+                    No users match your search
+                  </td>
+                </tr>
+              )}
+              {filteredUsers.map((user) => (
+                <tr
+                  key={user._id}
+                  ref={highlightId === user._id ? highlightRef : null}
+                  className={`hover:bg-gray-50/50 transition ${
+                    highlightId === user._id ? "bg-indigo-50" : ""
+                  }`}
+                >
                   <td className="px-6 py-4 font-medium text-gray-900">{user.name}</td>
                   <td className="px-6 py-4 text-gray-500 text-xs">{user.email}</td>
                   <td className="px-6 py-4">
@@ -278,27 +327,31 @@ export default function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Mobile Cards (This was missing) */}
         <div className="md:hidden space-y-4 mb-6">
-          {users.map((user) => (
-            <div key={user._id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs">
+          {filteredUsers.length === 0 && (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              No users match your search
+            </div>
+          )}
+          {filteredUsers.map((user) => (
+            <div
+              key={user._id}
+              ref={highlightId === user._id ? (highlightRef as any) : null}
+              className={`rounded-xl border p-4 shadow-xs ${
+                highlightId === user._id
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "bg-white border-gray-200"
+              }`}
+            >
               <div className="flex justify-between items-start mb-2">
                 <p className="text-sm font-bold text-gray-900">{user.name}</p>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  user.role === "admin"
-                    ? "bg-indigo-100 text-indigo-700"
-                    : "bg-gray-100 text-gray-600"
-                }`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role === "admin" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600"}`}>
                   {user.role.toUpperCase()}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mb-3">{user.email}</p>
               <div className="flex items-center justify-between">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  user.isVerified
-                    ? "bg-emerald-100 text-[#10B981]"
-                    : "bg-red-100 text-[#EF4444]"
-                }`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${user.isVerified ? "bg-emerald-100 text-[#10B981]" : "bg-red-100 text-[#EF4444]"}`}>
                   {user.isVerified ? "Verified" : "Unverified"}
                 </span>
                 <div className="flex gap-2">
@@ -310,11 +363,7 @@ export default function AdminUsersPage() {
                   </button>
                   <button
                     onClick={() => updateRole(user._id, user.role === "admin" ? "user" : "admin")}
-                    className={`text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition ${
-                      user.role === "admin"
-                        ? "text-red-500 border-red-200"
-                        : "text-[#10B981] border-emerald-200"
-                    }`}
+                    className={`text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition ${user.role === "admin" ? "text-red-500 border-red-200" : "text-[#10B981] border-emerald-200"}`}
                   >
                     {user.role === "admin" ? "Demote" : "Admin"}
                   </button>
@@ -328,14 +377,13 @@ export default function AdminUsersPage() {
               </div>
             </div>
           ))}
-          {users.length === 0 && (
-            <div className="text-center py-8 text-gray-400 text-sm">No users found</div>
-          )}
         </div>
 
-        {/* Pagination */}
         <div className="flex items-center justify-between mt-6 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-xs">
-          <p className="text-xs text-gray-500 font-medium">Page <span className="font-bold text-gray-900">{page}</span> of <span className="font-bold text-gray-900">{totalPages || 1}</span></p>
+          <p className="text-xs text-gray-500 font-medium">
+            Page <span className="font-bold text-gray-900">{page}</span> of{" "}
+            <span className="font-bold text-gray-900">{totalPages || 1}</span>
+          </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
@@ -353,8 +401,15 @@ export default function AdminUsersPage() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <Suspense>
+      <AdminUsersPageContent />
+    </Suspense>
   );
 }
