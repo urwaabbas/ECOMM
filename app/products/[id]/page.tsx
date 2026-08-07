@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { formatPricePKR } from "@/lib/utilis";
 import ShoppingActions from "@/components/ShoppingActions";
 
@@ -83,7 +82,6 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="bg-white border border-red-200 rounded-2xl p-8 max-w-md w-full text-center shadow-sm">
-          <div className="text-4xl mb-4"> </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">
             Product Not Found
           </h2>
@@ -120,11 +118,10 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
             <div className="bg-gray-50 p-6 border-r border-gray-100">
               <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white border border-gray-100">
-                <Image
+                <img
                   src={activeImage}
                   alt={product.title}
-                  className="object-cover"
-                  priority
+                  className="w-full h-full object-cover"
                 />
               </div>
 
@@ -140,10 +137,10 @@ export default function ProductDetailPage() {
                           : "border-gray-200 opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <Image
+                      <img
                         src={img}
                         alt={`${product.title} thumbnail ${i + 1}`}
-                        className="object-cover"
+                        className="w-full h-full object-cover"
                       />
                     </button>
                   ))}
