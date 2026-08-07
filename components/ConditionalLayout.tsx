@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ChatBox from "@/components/ChatBox";
 
 export default function ConditionalLayout({
   children,
@@ -21,6 +22,7 @@ export default function ConditionalLayout({
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
+      <ChatBox />
     </>
   );
 }
