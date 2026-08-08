@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useShopping } from "@/components/ShoppingProvider";
 import { formatPricePKR } from "@/lib/utilis";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Category {
   _id: string;
@@ -28,17 +28,21 @@ interface Product {
 }
 
 function ProductGridContent() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const {
     addToCart,
+    removeFromCart,
     addToWishlist,
     isInCart,
     isInWishlist,
     removeFromWishlist,
+    loading,
   } = useShopping();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -69,7 +73,7 @@ function ProductGridContent() {
   useEffect(() => {
     if (categoryFromUrl && categories.length > 0) {
       const matched = categories.find(
-        (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase()
+        (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase(),
       );
       if (matched) setSelectedCategories([matched._id]);
     }
@@ -86,11 +90,12 @@ function ProductGridContent() {
 
   useEffect(() => {
     async function fetchFilteredProducts() {
-      setLoading(true);
+      setLoadingProducts(true);
 
       const params = new URLSearchParams();
       if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCategories.length === 1) params.append("category", selectedCategories[0]);
+      if (selectedCategories.length === 1)
+        params.append("category", selectedCategories[0]);
       if (sort) params.append("sort", sort);
       params.append("page", currentPage.toString());
 
@@ -101,14 +106,14 @@ function ProductGridContent() {
         let filtered = data.products;
         if (selectedCategories.length > 1) {
           filtered = filtered.filter((p: Product) =>
-            selectedCategories.includes(p.category._id)
+            selectedCategories.includes(p.category._id),
           );
         }
         setProducts(filtered);
         setTotalPages(data.totalPages || 1);
         setTotalProducts(data.totalProducts || 0);
       }
-      setLoading(false);
+      setLoadingProducts(false);
     }
     fetchFilteredProducts();
   }, [debouncedSearch, selectedCategories, sort, currentPage]);
@@ -117,7 +122,7 @@ function ProductGridContent() {
     setSelectedCategories((prev) =>
       prev.includes(catId)
         ? prev.filter((id) => id !== catId)
-        : [...prev, catId]
+        : [...prev, catId],
     );
   };
 
@@ -129,9 +134,20 @@ function ProductGridContent() {
 
   const pid = (p: Product) => p._id.toString();
 
+  const handleCartToggle = (p: Product) => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    if (isInCart(pid(p))) {
+      removeFromCart(pid(p));
+    } else {
+      addToCart(normalizeProduct(p));
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
@@ -239,10 +255,13 @@ function ProductGridContent() {
         </aside>
 
         <main className="flex-1">
-          {loading ? (
+          {loadingProducts ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96">
+                <div
+                  key={i}
+                  className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96"
+                >
                   <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
                   <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
                   <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
@@ -251,9 +270,15 @@ function ProductGridContent() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-              <p className="text-gray-500">No products found matching your filters.</p>
+              <p className="text-gray-500">
+                No products found matching your filters.
+              </p>
               <button
-                onClick={() => { setSelectedCategories([]); setSearch(""); setSort(""); }}
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setSearch("");
+                  setSort("");
+                }}
                 className="mt-4 text-sm text-indigo-600 hover:underline"
               >
                 Clear all filters
@@ -262,74 +287,103 @@ function ProductGridContent() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.map((p) => (
-                  <div
-                    key={pid(p)}
-                    className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
-                  >
-                    <div>
-                      <Link href={`/products/${pid(p)}`} className="block">
-                        <div className="relative aspect-square w-full">
-                          <Image
-                            src={p.images[0]}
-                            alt={p.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
-                            {p.category?.name}
-                          </p>
-                          <h3 className="font-bold text-gray-800 mt-1">{p.title}</h3>
-                          <p className="text-gray-900 font-semibold mt-2">
-                            {formatPricePKR(p.discountPrice || p.price)}
-                          </p>
-                        </div>
-                      </Link>
-                    </div>
+                {products.map((p) => {
+                  const inCart = isInCart(pid(p));
+                  const inWishlist = isInWishlist(pid(p));
+                  const outOfStock = p.stock === 0;
+                  const discountPercent = p.discountPrice
+                    ? Math.round(((p.price - p.discountPrice) / p.price) * 100)
+                    : null;
 
-                    <div className="px-4 pb-4 space-y-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => addToCart(normalizeProduct(p))}
-                          disabled={p.stock === 0 || isInCart(pid(p))}
-                          className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
-                            p.stock === 0 || isInCart(pid(p))
-                              ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                              : "bg-indigo-600 text-white hover:bg-indigo-700"
-                          }`}
-                        >
-                          {p.stock === 0
-                            ? "Out of Stock"
-                            : isInCart(pid(p))
-                            ? "✓ Added"
-                            : "Add to Cart"}
-                        </button>
-                        <button
-                          onClick={() =>
-                            isInWishlist(pid(p))
-                              ? removeFromWishlist(pid(p))
-                              : addToWishlist(normalizeProduct(p))
-                          }
-                          className={`w-11 rounded-md border text-lg transition ${
-                            isInWishlist(pid(p))
-                              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                              : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                          }`}
-                        >
-                          {isInWishlist(pid(p)) ? "♥" : "♡"}
-                        </button>
+                  return (
+                    <div
+                      key={pid(p)}
+                      className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
+                    >
+                      <div>
+                        <Link href={`/products/${pid(p)}`} className="block">
+                          <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+                            <img
+                              src={p.images[0]}
+                              alt={p.title}
+                              className="w-full h-full object-cover"
+                            />
+                            {p.isFeatured && (
+                              <span className="absolute top-3 left-3 bg-indigo-600 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+                                Featured
+                              </span>
+                            )}
+                            {discountPercent && (
+                              <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+                                {discountPercent}% OFF
+                              </span>
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
+                              {p.category?.name}
+                            </p>
+                            <h3 className="font-bold text-gray-800 mt-1">
+                              {p.title}
+                            </h3>
+                            <div className="flex items-baseline gap-2 mt-2">
+                              <span className="text-gray-900 font-semibold">
+                                {formatPricePKR(p.discountPrice || p.price)}
+                              </span>
+                              {p.discountPrice && (
+                                <span className="text-xs text-gray-400 line-through">
+                                  {formatPricePKR(p.price)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
                       </div>
-                      <Link
-                        href={`/products/${pid(p)}`}
-                        className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
-                      >
-                        View Details
-                      </Link>
+
+                      <div className="px-4 pb-4 space-y-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleCartToggle(p)}
+                            disabled={outOfStock || loading}
+                            className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
+                              outOfStock
+                                ? "cursor-not-allowed bg-gray-100 text-gray-400"
+                                : inCart
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                            }`}
+                          >
+                            {outOfStock
+                              ? "Out of Stock"
+                              : inCart
+                              ? "✓ Added"
+                              : "Add to Cart"}
+                          </button>
+                          <button
+                            onClick={() =>
+                              inWishlist
+                                ? removeFromWishlist(pid(p))
+                                : addToWishlist(normalizeProduct(p))
+                            }
+                            className={`w-11 rounded-md border text-lg transition ${
+                              inWishlist
+                                ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                            }`}
+                          >
+                            {inWishlist ? "♥" : "♡"}
+                          </button>
+                        </div>
+                        <Link
+                          href={`/products/${pid(p)}`}
+                          className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
+                        >
+                          View Details
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (
@@ -342,19 +396,21 @@ function ProductGridContent() {
                     ← Previous
                   </button>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
-                        currentPage === page
-                          ? "bg-indigo-600 text-white border-indigo-600"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
+                          currentPage === page
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
 
                   <button
                     onClick={() => setCurrentPage((p) => p + 1)}
@@ -368,7 +424,9 @@ function ProductGridContent() {
 
               {totalProducts > 0 && (
                 <p className="text-center text-xs text-gray-400 mt-3">
-                  Showing {(currentPage - 1) * 12 + 1}–{Math.min(currentPage * 12, totalProducts)} of {totalProducts} products
+                  Showing {(currentPage - 1) * 12 + 1}–
+                  {Math.min(currentPage * 12, totalProducts)} of {totalProducts}{" "}
+                  products
                 </p>
               )}
             </>
@@ -381,19 +439,24 @@ function ProductGridContent() {
 
 export default function ProductGrid() {
   return (
-    <Suspense fallback={
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96">
-              <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-              <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
-              <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
-            </div>
-          ))}
+    <Suspense
+      fallback={
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96"
+              >
+                <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
+                <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ProductGridContent />
     </Suspense>
   );

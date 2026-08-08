@@ -20,15 +20,11 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
-    
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-
-    
     const skip = (page - 1) * limit;
 
-  
     const [products, totalProducts] = await Promise.all([
       Product.find()
         .populate("category", "name")
@@ -39,10 +35,8 @@ export async function GET(request: NextRequest) {
       Product.countDocuments(),
     ]);
 
-
     const totalPages = Math.ceil(totalProducts / limit);
 
-    
     return NextResponse.json({
       success: true,
       products,
@@ -54,6 +48,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -68,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, price, stock, image, categoryName } = body;
+    const { title, description, price, discountPrice, stock, image, categoryName } = body;
 
     if (!title || !price || !categoryName) {
       return NextResponse.json(
@@ -91,6 +86,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       price: Number(price),
+      discountPrice: discountPrice ? Number(discountPrice) : null,
       stock: Number(stock) || 0,
       images: [image],
       category: category._id,
@@ -115,8 +111,16 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { productId, title, description, price, stock, image, categoryName } =
-      await request.json();
+    const {
+      productId,
+      title,
+      description,
+      price,
+      discountPrice,
+      stock,
+      image,
+      categoryName,
+    } = await request.json();
 
     await dbConnect();
 
@@ -124,6 +128,7 @@ export async function PATCH(request: NextRequest) {
       title,
       description,
       price: Number(price),
+      discountPrice: discountPrice ? Number(discountPrice) : null,
       stock: Number(stock),
       images: [image],
     };

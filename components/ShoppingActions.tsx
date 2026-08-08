@@ -31,9 +31,9 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
     removeFromWishlist,
     isInCart,
     isInWishlist,
+    removeFromCart,
     loading,
   } = useShopping();
-
 
   if (!product) {
     return (
@@ -65,13 +65,16 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
     );
   }
 
-  
-  const handleAddToCart = () => {
+  const handleCartToggle = () => {
     if (!session?.user) {
       router.push("/login");
       return;
     }
-    addToCart(product);
+    if (inCart) {
+      removeFromCart(product._id);
+    } else {
+      addToCart(product);
+    }
   };
 
   const handleWishlistToggle = () => {
@@ -92,22 +95,24 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
 
   return (
     <div className="flex flex-col gap-3">
-   
       <button
-        onClick={handleAddToCart}
-        disabled={outOfStock || inCart || loading}
+        onClick={handleCartToggle}
+        disabled={outOfStock || loading}
         className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition ${
           outOfStock
             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
             : inCart
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-not-allowed"
-            : "bg-indigo-600 text-white hover:bg-indigo-700"
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+              : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
-        {outOfStock ? "Out of Stock" : inCart ? "✓ Added to Cart" : "Add to Cart"}
+        {outOfStock
+          ? "Out of Stock"
+          : inCart
+            ? "✓ Added "
+            : "Add to Cart"}
       </button>
 
-     
       <button
         onClick={handleWishlistToggle}
         disabled={loading}
@@ -120,10 +125,12 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
         {inWishlist ? "♥ Remove from Wishlist" : "♡ Add to Wishlist"}
       </button>
 
-    
       {!session?.user && (
         <p className="text-xs text-center text-gray-400">
-          <Link href="/login" className="text-indigo-600 hover:underline font-semibold">
+          <Link
+            href="/login"
+            className="text-indigo-600 hover:underline font-semibold"
+          >
             Sign in
           </Link>{" "}
           to save items to your cart and wishlist

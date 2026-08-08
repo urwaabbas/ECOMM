@@ -1,8 +1,11 @@
-// components/ProductGrid.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { getProductImageUrl } from "@/lib/product-image";
+import { useShopping } from "@/components/ShoppingProvider";
 
 interface Category {
   _id: string;
@@ -27,10 +30,13 @@ interface Product {
 }
 
 export default function ProductGrid() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { addToCart, removeFromCart, isInCart, loading } = useShopping();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -60,7 +66,7 @@ export default function ProductGrid() {
 
   useEffect(() => {
     async function fetchFilteredProducts() {
-      setLoading(true);
+      setLoadingProducts(true);
       try {
         const queryParams = new URLSearchParams();
         if (debouncedSearch) queryParams.append("search", debouncedSearch);
@@ -75,7 +81,7 @@ export default function ProductGrid() {
       } catch (err) {
         console.error("Error loading items:", err);
       } finally {
-        setLoading(false);
+        setLoadingProducts(false);
       }
     }
     fetchFilteredProducts();
@@ -89,6 +95,18 @@ export default function ProductGrid() {
     })
       .format(amount)
       .replace("PKR", "PKR.");
+  };
+
+  const handleCartToggle = (product: Product) => {
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+    if (isInCart(product._id)) {
+      removeFromCart(product._id);
+    } else {
+      addToCart(product);
+    }
   };
 
   return (
@@ -150,7 +168,7 @@ export default function ProductGrid() {
         </aside>
 
         <main className="flex-1">
-          {loading ? (
+          {loadingProducts ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div
@@ -173,6 +191,8 @@ export default function ProductGrid() {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.map((product) => {
                 const imageSrc = getProductImageUrl(product);
+                const inCart = isInCart(product._id);
+                const outOfStock = product.stock === 0;
 
                 return (
                   <div
@@ -190,6 +210,15 @@ export default function ProductGrid() {
                         {product.isFeatured && (
                           <span className="absolute top-3 left-3 bg-indigo-600 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
                             Featured
+                          </span>
+                        )}
+                        {product.discountPrice && (
+                          <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
+                            {Math.round(
+                              ((product.price - product.discountPrice) /
+                                product.price) *
+                                100,
+                            )}% OFF
                           </span>
                         )}
                       </div>
@@ -235,16 +264,32 @@ export default function ProductGrid() {
                         )}
                       </div>
 
-                      <button
-                        disabled={product.stock === 0}
-                        className={`w-full text-center py-2 rounded-md font-bold text-xs tracking-wide uppercase transition-colors ${
-                          product.stock === 0
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : "bg-gray-900 text-white hover:bg-indigo-600"
-                        }`}
-                      >
-                        {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleCartToggle(product)}
+                          disabled={outOfStock || loading}
+                          className={`flex-1 py-2 rounded-md font-bold text-xs tracking-wide uppercase transition-colors ${
+                            outOfStock
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : inCart
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                              : "bg-gray-900 text-white hover:bg-indigo-600"
+                          }`}
+                        >
+                          {outOfStock
+                            ? "Out of Stock"
+                            : inCart
+                            ? "✓ In Cart"
+                            : "Add to Cart"}
+                        </button>
+
+                        <Link
+                          href={`/products/${product._id}`}
+                          className="flex items-center justify-center px-3 py-2 rounded-md border border-gray-200 text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition text-xs font-bold uppercase"
+                        >
+                          View
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );

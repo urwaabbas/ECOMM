@@ -8,6 +8,7 @@ interface Product {
   _id: string;
   title: string;
   price: number;
+  discountPrice?: number | null;
   stock: number;
   images: string[];
   category: { name: string };
@@ -20,6 +21,8 @@ interface FormFieldsProps {
   setDescription: (v: string) => void;
   price: string;
   setPrice: (v: string) => void;
+  discountPrice: string;
+  setDiscountPrice: (v: string) => void;
   stock: string;
   setStock: (v: string) => void;
   image: string;
@@ -33,6 +36,7 @@ function FormFields({
   title, setTitle,
   description, setDescription,
   price, setPrice,
+  discountPrice, setDiscountPrice,
   stock, setStock,
   image,
   categoryName, setCategoryName,
@@ -75,6 +79,19 @@ function FormFields({
           onChange={(e) => setPrice(e.target.value)}
           placeholder="0.00"
           required
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Discount Price (USD){" "}
+          <span className="text-gray-400 font-normal">— optional</span>
+        </label>
+        <input
+          type="number"
+          value={discountPrice}
+          onChange={(e) => setDiscountPrice(e.target.value)}
+          placeholder="Leave empty for no discount"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
         />
       </div>
@@ -142,6 +159,7 @@ function AdminProductsPageContent() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [discountPrice, setDiscountPrice] = useState("");
   const [stock, setStock] = useState("");
   const [image, setImage] = useState("");
   const [categoryName, setCategoryName] = useState("");
@@ -199,6 +217,7 @@ function AdminProductsPageContent() {
     setTitle("");
     setDescription("");
     setPrice("");
+    setDiscountPrice("");
     setStock("");
     setImage("");
     setCategoryName("");
@@ -235,7 +254,15 @@ function AdminProductsPageContent() {
       const res = await fetch("/api/admin/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, price, stock, image, categoryName }),
+        body: JSON.stringify({
+          title,
+          description,
+          price,
+          discountPrice: discountPrice || null,
+          stock,
+          image,
+          categoryName,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -258,7 +285,13 @@ function AdminProductsPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: editingProduct?._id,
-          title, description, price, stock, image, categoryName,
+          title,
+          description,
+          price,
+          discountPrice: discountPrice || null,
+          stock,
+          image,
+          categoryName,
         }),
       });
       const data = await res.json();
@@ -277,6 +310,7 @@ function AdminProductsPageContent() {
     setEditingProduct(product);
     setTitle(product.title);
     setPrice(product.price.toString());
+    setDiscountPrice(product.discountPrice ? product.discountPrice.toString() : "");
     setStock(product.stock.toString());
     setImage(product.images?.[0] || "");
     setCategoryName(product.category?.name || "");
@@ -312,6 +346,7 @@ function AdminProductsPageContent() {
     title, setTitle,
     description, setDescription,
     price, setPrice,
+    discountPrice, setDiscountPrice,
     stock, setStock,
     image,
     categoryName, setCategoryName,
@@ -437,11 +472,31 @@ function AdminProductsPageContent() {
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No img</div>
                   )}
                 </div>
-                <p className="text-sm font-bold text-gray-900 truncate">{product.title}</p>
+                <div>
+                  <p className="text-sm font-bold text-gray-900 truncate">{product.title}</p>
+                  {product.discountPrice && (
+                    <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full">
+                      {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500">{product.category?.name}</p>
-                <p className="text-sm text-gray-900 font-semibold">
-                  PKR {(product.price * 278).toLocaleString()}
-                </p>
+                <div>
+                  {product.discountPrice ? (
+                    <>
+                      <p className="text-sm text-gray-900 font-semibold">
+                        PKR {(product.discountPrice * 278).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-400 line-through">
+                        PKR {(product.price * 278).toLocaleString()}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-900 font-semibold">
+                      PKR {(product.price * 278).toLocaleString()}
+                    </p>
+                  )}
+                </div>
                 <p className={`text-sm font-bold ${product.stock === 0 ? "text-[#EF4444]" : "text-[#10B981]"}`}>
                   {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
                 </p>
