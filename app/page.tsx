@@ -1,7 +1,9 @@
 import Link from "next/link";
 import Newsletter from "@/components/Newsletter";
-import HeroButtons from "@/components/HeroButtons";
 import HomeBottomSection from "@/components/HomeBottomSection";
+import FeaturedProductsCarousel from "@/components/FeaturedProductsCarousel";
+import CustomerReviews from "@/components/CustomerReviews";
+import HeroSection from "@/components/HeroButtons";
 
 const categories = [
   {
@@ -29,27 +31,8 @@ const categories = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative border-b border-gray-200 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/hero.png"
-            alt="Haanli Bazaar"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-        </div>
 
-        <div className="relative max-w-6xl mx-auto px-4 py-28 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white">
-            Welcome to Haanli Bazaar
-          </h1>
-          <p className="mt-4 text-gray-200 max-w-xl mx-auto text-lg">
-            Browse premium products across Electronics, Apparel, Home & Living,
-            and Fitness.
-          </p>
-          <HeroButtons />
-        </div>
-      </section>
+      <HeroSection />
 
       <section className="max-w-6xl mx-auto px-4 py-16">
         <h2 className="text-2xl font-bold text-gray-900 mb-8">
@@ -78,12 +61,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      <FeaturedProductsCarousel />
+
       <section className="bg-gray-50 border-t border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Why Haanli Bazaar?
           </h2>
-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-16 h-16 mx-auto mb-4 overflow-hidden">
@@ -94,7 +78,6 @@ export default function HomePage() {
                 Powered by Stripe — your payment details are always safe.
               </p>
             </div>
-
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-16 h-16 mx-auto mb-4 overflow-hidden">
                 <img src="/free-shipping.png" alt="Free Shipping" className="w-full h-full object-contain" />
@@ -104,7 +87,6 @@ export default function HomePage() {
                 Free delivery on all orders across Pakistan.
               </p>
             </div>
-
             <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
               <div className="w-16 h-16 mx-auto mb-4 overflow-hidden">
                 <img src="/easy-return.png" alt="Easy Returns" className="w-full h-full object-contain" />
@@ -117,6 +99,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <CustomerReviews />
 
       <HomeBottomSection />
 

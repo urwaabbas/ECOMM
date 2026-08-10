@@ -50,21 +50,21 @@ function ProductGridContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
 
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get("category");
 
   useEffect(() => {
     async function fetchCategories() {
-      const res = await fetch("/api/products");
-      const data = await res.json();
-      if (data.success) {
-        const uniqueCats = Array.from(
-          new Map(
-            data.products.map((p: Product) => [p.category._id, p.category]),
-          ).values(),
-        );
-        setCategories(uniqueCats as Category[]);
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.categories)) {
+          setCategories(data.categories);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
       }
     }
     fetchCategories();
@@ -86,7 +86,7 @@ function ProductGridContent() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, selectedCategories, sort]);
+  }, [debouncedSearch, selectedCategories, sort, onSaleOnly]);
 
   useEffect(() => {
     async function fetchFilteredProducts() {
@@ -109,6 +109,11 @@ function ProductGridContent() {
             selectedCategories.includes(p.category._id),
           );
         }
+        if (onSaleOnly) {
+          filtered = filtered.filter(
+            (p: Product) => p.discountPrice !== null && p.discountPrice > 0,
+          );
+        }
         setProducts(filtered);
         setTotalPages(data.totalPages || 1);
         setTotalProducts(data.totalProducts || 0);
@@ -116,7 +121,7 @@ function ProductGridContent() {
       setLoadingProducts(false);
     }
     fetchFilteredProducts();
-  }, [debouncedSearch, selectedCategories, sort, currentPage]);
+  }, [debouncedSearch, selectedCategories, sort, currentPage, onSaleOnly]);
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -151,7 +156,10 @@ function ProductGridContent() {
       <div className="mb-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-[1.8fr_1fr] items-end">
           <div>
-            <label htmlFor="search" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label
+              htmlFor="search"
+              className="block text-sm font-semibold text-gray-700 mb-2"
+            >
               Search Products
             </label>
             <input
@@ -164,7 +172,10 @@ function ProductGridContent() {
             />
           </div>
           <div>
-            <label htmlFor="sort" className="block text-sm font-semibold text-gray-700 mb-2">
+            <label
+              htmlFor="sort"
+              className="block text-sm font-semibold text-gray-700 mb-2"
+            >
               Sort by price
             </label>
             <select
@@ -180,7 +191,7 @@ function ProductGridContent() {
           </div>
         </div>
 
-        {selectedCategories.length > 0 && (
+        {(selectedCategories.length > 0 || onSaleOnly) && (
           <div className="mt-4 flex flex-wrap gap-2">
             {selectedCategories.map((id) => {
               const cat = categories.find((c) => c._id === id);
@@ -199,8 +210,24 @@ function ProductGridContent() {
                 </span>
               );
             })}
+            {onSaleOnly && (
+              <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
+                🏷 On Sale
+                <button
+                  onClick={() => setOnSaleOnly(false)}
+                  className="ml-1 hover:text-red-900"
+                >
+                  ×
+                </button>
+              </span>
+            )}
             <button
-              onClick={() => setSelectedCategories([])}
+              onClick={() => {
+                setSelectedCategories([]);
+                setSearch("");
+                setSort("");
+                setOnSaleOnly(false);
+              }}
               className="text-xs text-gray-400 hover:text-red-500 transition"
             >
               Clear all
@@ -246,7 +273,27 @@ function ProductGridContent() {
                 )}
               </button>
             ))}
+
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setOnSaleOnly((prev) => !prev)}
+                className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between ${
+                  onSaleOnly
+                    ? "border-red-300 bg-red-50 text-red-700"
+                    : "border-gray-200 bg-gray-50 text-gray-700 hover:border-red-300 hover:bg-red-50/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span>🏷</span>
+                  <span className="font-medium">On Sale</span>
+                </div>
+                {onSaleOnly && (
+                  <span className="text-red-600 font-bold">✓</span>
+                )}
+              </button>
+            </div>
           </div>
+
           {categories.length === 0 && (
             <p className="mt-4 text-sm text-gray-500">
               Categories are loading or unavailable.
@@ -278,6 +325,7 @@ function ProductGridContent() {
                   setSelectedCategories([]);
                   setSearch("");
                   setSort("");
+                  setOnSaleOnly(false);
                 }}
                 className="mt-4 text-sm text-indigo-600 hover:underline"
               >
@@ -349,15 +397,15 @@ function ProductGridContent() {
                               outOfStock
                                 ? "cursor-not-allowed bg-gray-100 text-gray-400"
                                 : inCart
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-                                : "bg-indigo-600 text-white hover:bg-indigo-700"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                  : "bg-indigo-600 text-white hover:bg-indigo-700"
                             }`}
                           >
                             {outOfStock
                               ? "Out of Stock"
                               : inCart
-                              ? "✓ Added"
-                              : "Add to Cart"}
+                                ? "✓ Added"
+                                : "Add to Cart"}
                           </button>
                           <button
                             onClick={() =>
