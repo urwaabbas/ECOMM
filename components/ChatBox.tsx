@@ -119,8 +119,8 @@ export default function ChatBox() {
         <div className="mb-3 flex w-[calc(100vw-2.5rem)] md:w-80 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
           <div className="flex items-center justify-between bg-indigo-600 px-4 py-3">
             <div>
-              <p className="text-sm font-bold text-white">Haanli Bazaar Support</p>
-              <p className="text-xs text-indigo-200">We typically reply within minutes</p>
+              <p className="text-sm font-bold text-white">Haanli Support</p>
+              <p className="text-xs text-indigo-200">How can we help you</p>
             </div>
             <button
               type="button"

@@ -1,11 +1,10 @@
-// lib/email.ts
+
 import nodemailer from "nodemailer";
 
 export async function sendVerificationEmail(email: string, token: string, name: string) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const verificationUrl = `${appUrl}/api/verify-email?token=${token}`;
 
-  // 1. Gather SMTP Environment Variables
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
   const user = process.env.SMTP_USER;
