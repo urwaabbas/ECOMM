@@ -2,14 +2,12 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationOtp } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
     await dbConnect();
 
-    // Safe JSON parsing
     let body: { name?: string; email?: string; password?: string } = {};
     try {
       body = await request.json();
@@ -44,7 +42,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { error: "Email already registered" },
@@ -55,25 +55,22 @@ export async function POST(request: Request) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // ✅ Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     const newUser = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       passwordHash: hashedPassword,
       role: "user",
-      isVerified: false,              // ✅ starts unverified
-      verificationToken,              // ✅ token saved to DB
-      verificationTokenExpires,       // ✅ expiry saved to DB
+      isVerified: false,
+      verificationOtp: otp,
+      verificationOtpExpires,
     });
 
-    // ✅ Send verification email
     try {
-      await sendVerificationEmail(email, verificationToken, name);
+      await sendVerificationOtp(normalizedEmail, otp, name);
     } catch (emailError) {
-      // If email fails, delete the user so they can try again
       await User.findByIdAndDelete(newUser._id);
       console.error("Email sending failed:", emailError);
       return NextResponse.json(
@@ -84,8 +81,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Account created! Please check your email to verify your account.",
-        userId: newUser._id,
+        message: "Account created! Please check your email for your 6-digit verification code.",
+        userId: newUser._id.toString(),
       },
       { status: 201 }
     );

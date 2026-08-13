@@ -12,6 +12,7 @@ interface Order {
   total: number;
   status: string;
   createdAt: string;
+  paymentMethod?: "stripe" | "cod";
   shippingInfo?: {
     name?: string;
     email?: string;
@@ -31,6 +32,9 @@ export function generateInvoice(order: Order) {
   const colQty = 110;
   const colUnit = 145;
   const colAmount = pageWidth - margin - 3;
+
+  const paymentLine1 = order.paymentMethod === "stripe" ? "Stripe Payment" : "Cash on Delivery";
+  const paymentLine2 = order.paymentMethod === "stripe" ? "Online" : "COD";
 
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, pageHeight, "F");
@@ -101,8 +105,8 @@ export function generateInvoice(order: Order) {
 
   doc.setTextColor(17, 24, 39);
   doc.setFont("helvetica", "normal");
-  doc.text("Stripe Payment", pageWidth - margin - 5, 70, { align: "right" });
-  doc.text("Online", pageWidth - margin - 5, 76, { align: "right" });
+  doc.text(paymentLine1, pageWidth - margin - 5, 70, { align: "right" });
+  doc.text(paymentLine2, pageWidth - margin - 5, 76, { align: "right" });
 
   let y = 100;
 

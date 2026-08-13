@@ -5,11 +5,23 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, password } = await request.json();
+    await dbConnect();
 
-    if (!token || !password) {
+    let body: { email?: string; otp?: string; password?: string } = {};
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { error: "Token and password are required" },
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const { email, otp, password } = body;
+
+    if (!email || !otp || !password) {
+      return NextResponse.json(
+        { error: "Email, OTP, and new password are required" },
         { status: 400 }
       );
     }
@@ -21,16 +33,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await dbConnect();
+    const normalizedEmail = email.toLowerCase();
 
     const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpires: { $gt: new Date() },
+      email: normalizedEmail,
+      resetOtpExpires: { $gt: new Date() },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid or expired reset link" },
+        { error: "OTP has expired. Please request a new one." },
+        { status: 400 }
+      );
+    }
+
+    if (user.resetOtp !== otp) {
+      return NextResponse.json(
+        { error: "Invalid OTP. Please check and try again." },
         { status: 400 }
       );
     }
@@ -39,17 +58,18 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user.passwordHash = hashedPassword;
-    user.resetToken = null;
-    user.resetTokenExpires = null;
+    user.resetOtp = null;
+    user.resetOtpExpires = null;
     await user.save();
 
-    return NextResponse.json({
-      message: "Password reset successfully. You can now login.",
-    });
+    return NextResponse.json(
+      { message: "Password reset successfully. You can now log in." },
+      { status: 200 }
+    );
   } catch (error: any) {
     console.error("Reset password error:", error.message);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

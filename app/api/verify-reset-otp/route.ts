@@ -29,34 +29,29 @@ export async function POST(request: NextRequest) {
 
     const user = await User.findOne({
       email: normalizedEmail,
-      verificationOtpExpires: { $gt: new Date() },
+      resetOtpExpires: { $gt: new Date() },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "OTP has expired. Please register again." },
+        { error: "OTP has expired. Please request a new one." },
         { status: 400 }
       );
     }
 
-    if (user.verificationOtp !== otp) {
+    if (user.resetOtp !== otp) {
       return NextResponse.json(
         { error: "Invalid OTP. Please check and try again." },
         { status: 400 }
       );
     }
 
-    user.isVerified = true;
-    user.verificationOtp = null;
-    user.verificationOtpExpires = null;
-    await user.save();
-
     return NextResponse.json(
-      { message: "Email verified successfully. You can now log in." },
+      { message: "OTP verified." },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Email verification error:", error);
+    console.error("Verify reset OTP error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

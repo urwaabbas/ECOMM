@@ -13,7 +13,7 @@ const UserSchema = new Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, "Password is required"], // ✅ single source of truth
+      required: [true, "Password is required"],
     },
     role: {
       type: String,
@@ -28,19 +28,19 @@ const UserSchema = new Schema(
       type: String,
       default: null,
     },
-    verificationToken: {
+    verificationOtp: {
       type: String,
       default: null,
     },
-    verificationTokenExpires: {
+    verificationOtpExpires: {
       type: Date,
       default: null,
     },
-    resetToken: {
+    resetOtp: {
       type: String,
       default: null,
     },
-    resetTokenExpires: {
+    resetOtpExpires: {
       type: Date,
       default: null,
     },

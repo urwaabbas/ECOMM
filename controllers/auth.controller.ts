@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import { registerUser } from "@/services/auth.service";
 
 export async function handleRegister(request: Request) {
@@ -25,17 +24,15 @@ export async function handleRegister(request: Request) {
 
     return NextResponse.json(
       {
-        message:
-          "Registered successfully. Please verify your email before logging in.",
+        message: "Account created! Please check your email for your 6-digit verification code.",
         user: newUser,
-        verificationUrl: newUser.verificationUrl,
       },
       { status: 201 },
     );
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Something went wrong";
-    console.error("❌ Registration Handler Error:", errorMessage);
+    console.error(" Registration Handler Error:", errorMessage);
 
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }

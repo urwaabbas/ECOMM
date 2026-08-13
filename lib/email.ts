@@ -1,62 +1,87 @@
-
 import nodemailer from "nodemailer";
 
-export async function sendVerificationEmail(email: string, token: string, name: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const verificationUrl = `${appUrl}/api/verify-email?token=${token}`;
-
+function createTransporter() {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
-  const from = process.env.SMTP_FROM || `"E-Shop Support" <no-reply@yourdomain.com>`;
 
-  // 2. Safety Guard against missing setup variables
   if (!host || !user || !pass) {
-    console.error("❌ SMTP Environment Variables (SMTP_HOST, SMTP_USER, or SMTP_PASSWORD) are missing!");
-    throw new Error("SMTP credentials are not configured in your .env.local file.");
+    throw new Error("SMTP credentials are not configured in your .env file.");
   }
 
-  // 3. Create SMTP Transporter
-  const transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // Use SSL for port 465, TLS/STARTTLS for port 587
-    auth: {
-      user,
-      pass,
-    },
-    tls: {
-      rejectUnauthorized: false, // Prevents certificate blockages in local environments
-    },
+    secure: port === 465,
+    auth: { user, pass },
+    tls: { rejectUnauthorized: false },
   });
+}
 
-  // 4. Send Email
+function otpEmailTemplate(title: string, name: string, otp: string, note: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 32px; border: 1px solid #e2e8f0; border-radius: 10px;">
+      <h2 style="color: #4f46e5; margin-bottom: 8px;">${title}</h2>
+      <p style="color: #334155;">Hi ${name},</p>
+      <p style="color: #334155;">${note}</p>
+      <div style="margin: 32px 0; text-align: center;">
+        <div style="display: inline-block; background: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 10px; padding: 20px 40px;">
+          <span style="font-size: 36px; font-weight: 800; letter-spacing: 12px; color: #4f46e5;">${otp}</span>
+        </div>
+      </div>
+      <p style="color: #64748b; font-size: 13px;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      <p style="font-size: 11px; color: #94a3b8;">If you did not request this, please ignore this email. Your account is safe.</p>
+      <p style="font-size: 11px; color: #94a3b8;">— Haanli Bazaar Team</p>
+    </div>
+  `;
+}
+
+export async function sendVerificationOtp(email: string, otp: string, name: string) {
+  const from = process.env.SMTP_FROM || '"Haanli Bazaar" <no-reply@haanlibazaar.com>';
+  const transporter = createTransporter();
+
   try {
     await transporter.sendMail({
       from,
       to: email,
-      subject: "Verify your email address",
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 style="color: #4f46e5;">Welcome to E-Shop, ${name}!</h2>
-          <p>Thank you for signing up. Please verify your email address to secure your account and start shopping.</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="${verificationUrl}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Verify Email Address
-            </a>
-          </div>
-          <p style="font-size: 12px; color: #64748b;">If the button doesn't work, copy and paste this link into your browser:</p>
-          <p style="font-size: 12px; color: #4f46e5; word-break: break-all;">${verificationUrl}</p>
-          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-          <p style="font-size: 11px; color: #94a3b8;">This link will expire in 24 hours. If you did not sign up for this account, please ignore this email.</p>
-        </div>
-      `,
+      subject: "Your Haanli Bazaar verification code",
+      html: otpEmailTemplate(
+        "Verify your email",
+        name,
+        otp,
+        "Use the code below to verify your email address and complete your registration."
+      ),
     });
-    console.log(`✅ SMTP verification email successfully sent to: ${email}`);
+    console.log(`✅ Verification OTP sent to: ${email}`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown SMTP error";
-    console.error("❌ SMTP email delivery failed:", message);
-    throw new Error(`Could not send SMTP verification email: ${message}`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Failed to send verification OTP:", message);
+    throw new Error(`Could not send verification OTP: ${message}`);
+  }
+}
+
+export async function sendPasswordResetOtp(email: string, otp: string, name: string) {
+  const from = process.env.SMTP_FROM || '"Haanli Bazaar" <no-reply@haanlibazaar.com>';
+  const transporter = createTransporter();
+
+  try {
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: "Your Haanli Bazaar password reset code",
+      html: otpEmailTemplate(
+        "Reset your password",
+        name,
+        otp,
+        "Use the code below to reset your password. If you did not request this, ignore this email."
+      ),
+    });
+    console.log(`✅ Password reset OTP sent to: ${email}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Failed to send reset OTP:", message);
+    throw new Error(`Could not send reset OTP: ${message}`);
   }
 }

@@ -1,12 +1,13 @@
 # E-commerce Project Folder Structure
 
-This is a clean overview of the main folders and files in the project.
+This is the current project structure as it exists in the workspace.
 
 ```text
 Ecomm/
 ├── .env
 ├── .gitattributes
 ├── .gitignore
+├── .next/
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── README.md
@@ -26,12 +27,28 @@ Ecomm/
 │   ├── admin/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
+│   │   ├── chat/
+│   │   │   └── page.tsx
 │   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── newsletter/
+│   │   │   └── page.tsx
 │   │   ├── orders/
+│   │   │   └── page.tsx
 │   │   ├── products/
+│   │   │   └── page.tsx
 │   │   └── users/
+│   │       └── page.tsx
 │   ├── api/
 │   │   ├── admin/
+│   │   │   ├── fcm-token/
+│   │   │   ├── newsletter/
+│   │   │   ├── notifications/
+│   │   │   ├── orders/
+│   │   │   ├── products/
+│   │   │   └── ...
+│   │   ├── ai/
+│   │   │   └── chat/
 │   │   ├── auth/
 │   │   ├── cart/
 │   │   ├── categories/
@@ -52,29 +69,49 @@ Ecomm/
 │   │   ├── webhook/
 │   │   └── wishlist/
 │   ├── cart/
+│   │   └── page.tsx
 │   ├── checkout/
+│   │   └── page.tsx
 │   ├── contact/
+│   │   └── page.tsx
 │   ├── favicon.ico
 │   ├── forgot-password/
+│   │   └── page.tsx
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── login/
+│   │   └── page.tsx
 │   ├── orders/
+│   │   └── page.tsx
 │   ├── page.tsx
 │   ├── payment/
 │   │   ├── fail/
 │   │   └── success/
 │   ├── products/
+│   │   ├── page.tsx
 │   │   └── [id]/
 │   ├── profile/
+│   │   └── page.tsx
 │   ├── register/
+│   │   └── page.tsx
 │   ├── reset-password/
+│   │   └── page.tsx
 │   └── wishlist/
+│       └── page.tsx
 ├── components/
+│   ├── admin/
+│   │   ├── AdminChatBell.tsx
+│   │   ├── AdminNotificationBell.tsx
+│   │   ├── AdminSearch.tsx
+│   │   └── AiAssistant.tsx
 │   ├── AdminSidebar.tsx
 │   ├── ChatBox.tsx
 │   ├── ConditionalLayout.tsx
+│   ├── CustomerReviews.tsx
+│   ├── FeaturedProductsCarousel.tsx
 │   ├── Footer.tsx
+│   ├── HeroButtons.tsx
+│   ├── HomeBottomSection.tsx
 │   ├── Navbar.tsx
 │   ├── Newsletter.tsx
 │   ├── NotificationManager.tsx
@@ -97,10 +134,12 @@ Ecomm/
 │   ├── fcm.ts
 │   ├── firebase-admin.ts
 │   ├── firebase.ts
+│   ├── groq.ts
 │   ├── invoice.ts
 │   ├── product-image.ts
 │   ├── push-notification.ts
-│   └── seed.ts
+│   ├── seed.ts
+│   └── utilis.ts
 ├── middleware/
 │   └── middleware.ts
 ├── models/
@@ -114,7 +153,17 @@ Ecomm/
 │   ├── User.ts
 │   └── Wishlist.ts
 ├── public/
-│   └── firebase-messaging-sw.js
+│   ├── easy-return.png
+│   ├── file.svg
+│   ├── firebase-messaging-sw.js
+│   ├── free-shipping.png
+│   ├── globe.svg
+│   ├── hero.png
+│   ├── images.jpg
+│   ├── next.svg
+│   ├── secure-img.png
+│   ├── vercel.svg
+│   └── window.svg
 ├── services/
 │   ├── auth.service.ts
 │   ├── category.service.ts
@@ -122,26 +171,31 @@ Ecomm/
 ├── types/
 │   └── next-auth.d.ts
 ├── validations/
+├── node_modules/
+└── .next/
 ```
 
-## What each folder is for
+## Project structure summary
 
-- app/: Main Next.js app routes, pages, and API endpoints.
-- components/: Reusable UI components and providers.
-- controllers/: Logic handlers for API requests.
-- services/: Business logic for auth, products, categories, etc.
-- models/: Database schemas/models.
-- lib/: Shared utilities such as DB connection, bcrypt, email, invoice, and seeding.
-- middleware/: Request middleware and guards.
-- public/: Static assets.
-- types/: TypeScript type definitions.
-- validations/: Input validation logic.
-- config/: Project configuration files.
-- helpers/: Extra helper functions.
+- app/: main frontend routes and Next.js pages
+- app/api/: API route groups for auth, products, orders, notifications, checkout, upload, and more
+- components/: reusable UI and provider components
+- components/admin/: admin-specific dashboard and assistant utilities
+- controllers/: API handlers and request logic
+- services/: business-layer services for auth, categories, and products
+- models/: Mongo/Mongoose schemas
+- lib/: shared utilities, database, auth helpers, email, notifications, and integrations
+- middleware/: request middleware
+- public/: static assets and PWA-related files
+- types/: TypeScript declarations
+- validations/: validation logic and schema checks
+- config/: project config folders
+- helpers/: supporting helper utilities
 
 ## Quick understanding
 
-- Frontend pages live in app/.
-- Backend/API routes live in app/api/.
-- Data models live in models/.
-- Core application logic is split between controllers/ and services/.
+- Frontend pages live in app/
+- Backend endpoints are under app/api/
+- Database models live in models/
+- Business logic is split between controllers/ and services/
+- Shared utilities and integrations live in lib/

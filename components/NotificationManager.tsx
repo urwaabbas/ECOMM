@@ -141,7 +141,7 @@ export default function NotificationManager() {
   return (
     <>
       {showPermissionPrompt && (
-        <div className="fixed bottom-5 left-5 z-[100] w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
+        <div className="fixed bottom-24 left-5 z-[100] w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg">
           <p className="text-sm font-semibold text-gray-900">
             Enable order notifications
           </p>

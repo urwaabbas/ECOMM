@@ -1,7 +1,6 @@
-import crypto from "crypto";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationOtp } from "@/lib/email";
 import bcrypt from "bcryptjs";
 
 interface RegisterInput {
@@ -13,35 +12,34 @@ interface RegisterInput {
 export async function registerUser({ name, email, password }: RegisterInput) {
   await dbConnect();
 
-  const existUser = await User.findOne({ email });
+  const normalizedEmail = email.toLowerCase();
+
+  const existUser = await User.findOne({ email: normalizedEmail });
   if (existUser) {
-    throw new Error("this email is already registered");
+    throw new Error("This email is already registered");
   }
 
   const salt = await bcrypt.genSalt(10);
-
   const hashedPassword = await bcrypt.hash(password, salt);
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-  const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
   const newUser = await User.create({
     name,
-    email,
-    password: hashedPassword,
+    email: normalizedEmail,
     passwordHash: hashedPassword,
     role: "user",
     isVerified: false,
-    verificationToken,
-    verificationTokenExpires,
+    verificationOtp: otp,
+    verificationOtpExpires,
   });
 
-  let verificationUrl: string | null = null;
-
   try {
-    await sendVerificationEmail(newUser.email, verificationToken, newUser.name);
+    await sendVerificationOtp(newUser.email, otp, newUser.name);
   } catch (emailError) {
-    console.error("Verification email could not be sent:", emailError);
-    verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/verify-email?token=${verificationToken}`;
+    await User.findByIdAndDelete(newUser._id);
+    throw new Error("Failed to send verification email. Please try again.");
   }
 
   return {
@@ -50,6 +48,5 @@ export async function registerUser({ name, email, password }: RegisterInput) {
     email: newUser.email,
     role: newUser.role,
     needsVerification: true,
-    verificationUrl,
   };
 }
