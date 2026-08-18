@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userContext = session?.user?.name
-      ? `\n\nLogged in customer: ${session.user.name}. Address them by their first name naturally in conversation.`
+      ? `\n\nLogged in customer: ${session.user.name}. You may greet them by first name only on the very first message. Do not repeat their name or greet them again in subsequent messages.`
       : `\n\nCustomer is a guest (not logged in).`;
 
     const contextMessage = `Available Products:\n${productContext}${orderContext}${userContext}\n\nCustomer message: ${message.trim()}`;
