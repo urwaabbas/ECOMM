@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     if (error.status === 429) {
       return NextResponse.json(
-        { error: "AI service is busy. Please try again in a moment." },
+        { error: "Wazir is experiencing high demand right now. Please try again in a moment." },
         { status: 429 },
       );
     }
