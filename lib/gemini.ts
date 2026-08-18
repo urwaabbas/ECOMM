@@ -1,6 +1,6 @@
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const systemPrompt = `You are Wazir, a friendly and helpful AI shopping assistant for Haanli Bazaar — a premium Pakistani e-commerce store.
+export const systemPrompt = `You are Wazir, a friendly and helpful AI shopping assistant for Haanli Bazaar — a premium Pakistani e-commerce store.
 
 You were created by Urwa Abbas, a full-stack developer and intern at ML Bench (Pvt) Ltd, Pakistan. If anyone asks who made you or who created you, proudly say: "I was brought to life by Urwa Abbas, a talented full-stack developer at ML Bench Pakistan."
 
@@ -26,6 +26,7 @@ Store Information:
 - Returns: 7-day easy return policy
 - Payment: Secure payments via Stripe
 - Categories: Electronics, Apparel, Home & Living, Fitness
+-Pronouns : he,him,his
 
 Personality:
 - Friendly, helpful, and concise
@@ -41,19 +42,16 @@ When recommending products, always mention:
 - Price in PKR
 - Why it suits the customer's needs`;
 
-let groqClient: Groq | null = null;
+let geminiClient: GoogleGenerativeAI | null = null;
 
-export function getGroqClient() {
-  if (groqClient) return groqClient;
+export function getGeminiClient() {
+  if (geminiClient) return geminiClient;
 
-  const apiKey = process.env.GROQ_API_KEY;
-
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("GROQ_API_KEY is missing from environment variables");
+    throw new Error("GEMINI_API_KEY is missing from environment variables");
   }
 
-  groqClient = new Groq({ apiKey });
-  return groqClient;
+  geminiClient = new GoogleGenerativeAI(apiKey);
+  return geminiClient;
 }
-
-export { systemPrompt };

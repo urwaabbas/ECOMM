@@ -16,6 +16,13 @@ const suggestions = [
   "Where is my order?",
 ];
 
+function renderMarkdown(text: string) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br/>");
+}
+
 export default function AIAssistant() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
@@ -26,12 +33,20 @@ export default function AIAssistant() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const userInitial = session?.user?.name
+    ? session.user.name.charAt(0).toUpperCase()
+    : "G";
+
+  const firstName = session?.user?.name
+    ? session.user.name.split(" ")[0]
+    : null;
+
   useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([
         {
           role: "assistant",
-          content: `Hi${session?.user?.name ? ` ${session.user.name.split(" ")[0]}` : ""}! I'm Wazir, your personal shopping assistant. What can I help you find today?`,
+          content: `Hi${firstName ? ` ${firstName}` : ""}! I'm Wazir, your personal shopping assistant. What can I help you find today?`,
         },
       ]);
     }
@@ -97,7 +112,7 @@ export default function AIAssistant() {
       setMessages([
         {
           role: "assistant",
-          content: `Hi${session?.user?.name ? ` ${session.user.name.split(" ")[0]}` : ""}! I'm Wazir, your personal shopping assistant. What can I help you find today?`,
+          content: `Hi${firstName ? ` ${firstName}` : ""}! I'm Wazir, your personal shopping assistant. What can I help you find today?`,
         },
       ]);
     }, 100);
@@ -368,11 +383,26 @@ export default function AIAssistant() {
           color: white;
           font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        .wazir-user-badge {
+          position: absolute;
+          bottom: -4px;
+          left: -4px;
+          background: #4f46e5;
+          border: 2px solid white;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          font-weight: 700;
+          color: white;
+          font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
       `}</style>
 
-      <div
-        style={{ position: "fixed", bottom: "20px", left: "20px", zIndex: 200 }}
-      >
+      <div style={{ position: "fixed", bottom: "20px", left: "20px", zIndex: 200 }}>
         {open && (
           <div className="wazir-window">
             <div className="wazir-header">
@@ -381,44 +411,18 @@ export default function AIAssistant() {
                 <div className="wazir-header-name">Wazir AI</div>
                 <div className="wazir-header-status">
                   <span className="wazir-status-dot" />
-                  Online — Powered by Groq
+                  Online — Powered by Gemini
                 </div>
               </div>
               <div className="wazir-header-actions">
-                <button
-                  className="wazir-icon-btn"
-                  onClick={handleReset}
-                  title="New conversation"
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                <button className="wazir-icon-btn" onClick={handleReset} title="New conversation">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
                   </svg>
                 </button>
-                <button
-                  className="wazir-icon-btn"
-                  onClick={() => setOpen(false)}
-                  title="Close"
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                <button className="wazir-icon-btn" onClick={() => setOpen(false)} title="Close">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 6 6 18M6 6l12 12" />
                   </svg>
                 </button>
@@ -427,20 +431,14 @@ export default function AIAssistant() {
 
             <div className="wazir-body">
               {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`wazir-msg-row ${m.role === "user" ? "wazir-msg-row-user" : ""}`}
-                >
-                  <div
-                    className={`wazir-msg-icon ${m.role === "user" ? "wazir-msg-icon-user" : "wazir-msg-icon-ai"}`}
-                  >
-                    {m.role === "user" ? "U" : "W"}
+                <div key={i} className={`wazir-msg-row ${m.role === "user" ? "wazir-msg-row-user" : ""}`}>
+                  <div className={`wazir-msg-icon ${m.role === "user" ? "wazir-msg-icon-user" : "wazir-msg-icon-ai"}`}>
+                    {m.role === "user" ? userInitial : "W"}
                   </div>
                   <div
                     className={`wazir-bubble ${m.role === "user" ? "wazir-bubble-user" : "wazir-bubble-ai"}`}
-                  >
-                    {m.content}
-                  </div>
+                    dangerouslySetInnerHTML={{ __html: renderMarkdown(m.content) }}
+                  />
                 </div>
               ))}
 
@@ -448,9 +446,7 @@ export default function AIAssistant() {
                 <div className="wazir-msg-row">
                   <div className="wazir-msg-icon wazir-msg-icon-ai">W</div>
                   <div className="wazir-bubble wazir-bubble-ai wazir-typing">
-                    <span />
-                    <span />
-                    <span />
+                    <span /><span /><span />
                   </div>
                 </div>
               )}
@@ -461,11 +457,7 @@ export default function AIAssistant() {
                 <div className="wazir-suggestions">
                   <div className="wazir-suggest-label">Suggested</div>
                   {suggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      className="wazir-suggest-btn"
-                      onClick={() => sendMessage(s)}
-                    >
+                    <button key={i} className="wazir-suggest-btn" onClick={() => sendMessage(s)}>
                       {s}
                     </button>
                   ))}
@@ -492,16 +484,7 @@ export default function AIAssistant() {
                   disabled={!input.trim() || loading}
                   aria-label="Send"
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 2 11 13M22 2 15 22 11 13M11 13 2 9 22 2" />
                   </svg>
                 </button>
@@ -515,30 +498,14 @@ export default function AIAssistant() {
           className="wazir-fab"
           onClick={() => setOpen((prev) => !prev)}
           aria-label="Open Wazir AI"
+          style={{ position: "relative" }}
         >
           {open ? (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           ) : (
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="3" />
               <path d="M8 11h.01M16 11h.01" />
               <path d="M10 15c.5.5 1 .75 2 .75s1.5-.25 2-.75" />
@@ -551,6 +518,9 @@ export default function AIAssistant() {
             </svg>
           )}
           <div className="wazir-fab-badge">AI</div>
+          {session?.user && (
+            <div className="wazir-user-badge">{userInitial}</div>
+          )}
         </button>
       </div>
     </>

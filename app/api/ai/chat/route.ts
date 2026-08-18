@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import Order from "@/models/Order";
-import { getGroqClient, systemPrompt } from "@/lib/groq";
+import { getGeminiClient, systemPrompt } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 
@@ -68,7 +68,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const contextMessage = `Available Products:\n${productContext}${orderContext}\n\nCustomer message: ${message.trim()}`;
+    const userContext = session?.user?.name
+      ? `\n\nLogged in customer: ${session.user.name}. Address them by their first name naturally in conversation.`
+      : `\n\nCustomer is a guest (not logged in).`;
+
+    const contextMessage = `Available Products:\n${productContext}${orderContext}${userContext}\n\nCustomer message: ${message.trim()}`;
 
     const chatHistory = Array.isArray(history)
       ? history
@@ -80,29 +84,33 @@ export async function POST(request: NextRequest) {
           )
           .slice(-10)
           .map((h: any) => ({
-            role: h.role,
-            content: h.content,
+            role: h.role === "assistant" ? "model" : "user",
+            parts: [{ text: h.content }],
           }))
       : [];
 
-    const messages = [
-      { role: "system" as const, content: systemPrompt },
-      ...chatHistory,
-      { role: "user" as const, content: contextMessage },
-    ];
-
-    const groq = getGroqClient();
-
-    const completion = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
-      messages,
-      max_tokens: 500,
-      temperature: 0.7,
+    const gemini = getGeminiClient();
+    const model = gemini.getGenerativeModel({
+      model: "gemini-3.6-flash",
+      systemInstruction: systemPrompt,
+    });
+    const chat = model.startChat({
+      history: chatHistory,
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+      },
     });
 
-    const response =
-      completion.choices[0]?.message?.content ||
-      "I could not generate a response. Please try again.";
+    const result = await chat.sendMessage(contextMessage);
+    const response = result.response.text();
+
+    if (!response) {
+      return NextResponse.json(
+        { error: "I could not generate a response. Please try again." },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
