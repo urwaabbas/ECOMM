@@ -12,7 +12,11 @@ export async function POST(request: NextRequest) {
   try {
     const { message, history } = await request.json();
 
-    if (!message || typeof message !== "string" || message.trim().length === 0) {
+    if (
+      !message ||
+      typeof message !== "string" ||
+      message.trim().length === 0
+    ) {
       return NextResponse.json(
         { error: "Message is required" },
         { status: 400 },
@@ -90,13 +94,15 @@ export async function POST(request: NextRequest) {
     const groq = getGroqClient();
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
       messages,
       max_tokens: 500,
       temperature: 0.7,
     });
 
-    const response = completion.choices[0]?.message?.content || "I could not generate a response. Please try again.";
+    const response =
+      completion.choices[0]?.message?.content ||
+      "I could not generate a response. Please try again.";
 
     return NextResponse.json({
       success: true,
