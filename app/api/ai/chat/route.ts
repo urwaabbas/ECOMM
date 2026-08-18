@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
+import "@/models/Category";
 import Order from "@/models/Order";
 import { getGeminiClient, systemPrompt } from "@/lib/gemini";
 
