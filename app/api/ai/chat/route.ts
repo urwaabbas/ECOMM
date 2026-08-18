@@ -5,7 +5,7 @@ import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import "@/models/Category";
 import Order from "@/models/Order";
-import { getGeminiClient, systemPrompt } from "@/lib/gemini";
+import { getGroqClient, systemPrompt } from "@/lib/groq";
 
 export const runtime = "nodejs";
 
@@ -32,7 +32,6 @@ export async function POST(request: NextRequest) {
     }
 
     const session = await getServerSession(authOptions);
-
     await dbConnect();
 
     const products = await Product.find({ stock: { $gt: 0 } })
@@ -84,39 +83,29 @@ export async function POST(request: NextRequest) {
               (h.role === "user" || h.role === "assistant"),
           )
           .slice(-10)
-          .map((h: any) => ({
-            role: h.role === "assistant" ? "model" : "user",
-            parts: [{ text: h.content }],
-          }))
+          .map((h: any) => ({ role: h.role, content: h.content }))
       : [];
 
-    const gemini = getGeminiClient();
-    const model = gemini.getGenerativeModel({
-      model: "gemini-3.6-flash",
-      systemInstruction: systemPrompt,
-    });
-    const chat = model.startChat({
-      history: chatHistory,
-      generationConfig: {
-        maxOutputTokens: 1024,
-        temperature: 0.7,
-      },
+    const messages = [
+      { role: "system" as const, content: systemPrompt },
+      ...chatHistory,
+      { role: "user" as const, content: contextMessage },
+    ];
+
+    const groq = getGroqClient();
+
+    const completion = await groq.chat.completions.create({
+      model: "groq/compound-mini",
+      messages,
+      max_tokens: 1024,
+      temperature: 0.7,
     });
 
-    const result = await chat.sendMessage(contextMessage);
-    const response = result.response.text();
+    const response =
+      completion.choices[0]?.message?.content ||
+      "I could not generate a response. Please try again.";
 
-    if (!response) {
-      return NextResponse.json(
-        { error: "I could not generate a response. Please try again." },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      response,
-    });
+    return NextResponse.json({ success: true, response });
   } catch (error: any) {
     console.error("AI chat error:", error);
 
@@ -129,8 +118,21 @@ export async function POST(request: NextRequest) {
 
     if (error.status === 429) {
       return NextResponse.json(
-        { error: "Wazir is experiencing high demand right now. Please try again in a moment." },
+        {
+          error:
+            "Wazir is experiencing high demand right now. Please try again in a moment.",
+        },
         { status: 429 },
+      );
+    }
+
+    if (error.status === 503) {
+      return NextResponse.json(
+        {
+          error:
+            "Wazir is experiencing high demand right now. Please try again in a moment.",
+        },
+        { status: 503 },
       );
     }
 

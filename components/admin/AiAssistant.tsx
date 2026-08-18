@@ -411,7 +411,7 @@ export default function AIAssistant() {
                 <div className="wazir-header-name">Wazir AI</div>
                 <div className="wazir-header-status">
                   <span className="wazir-status-dot" />
-                  Online — Powered by Gemini
+                  Online — Powered by Groq
                 </div>
               </div>
               <div className="wazir-header-actions">
