@@ -13,7 +13,7 @@ const UserSchema = new Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, "Password is required"],
+      default: null,
     },
     role: {
       type: String,
@@ -27,6 +27,19 @@ const UserSchema = new Schema(
     fcmToken: {
       type: String,
       default: null,
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    image: {
+      type: String,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ["credentials", "google"],
+      default: "credentials",
     },
     verificationOtp: {
       type: String,
