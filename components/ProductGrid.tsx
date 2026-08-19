@@ -140,9 +140,10 @@ function ProductGridContent() {
   const pid = (p: Product) => p._id.toString();
 
   const handleCartToggle = (p: Product) => {
-    if (!session?.user) {
-      router.push("/login");
-      return;
+    if (isInCart(pid(p))) {
+      removeFromCart(pid(p));
+    } else {
+      addToCart(normalizeProduct(p));
     }
     if (isInCart(pid(p))) {
       removeFromCart(pid(p));

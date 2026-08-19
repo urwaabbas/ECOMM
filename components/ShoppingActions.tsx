@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useShopping } from "@/components/ShoppingProvider";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 
 interface Product {
   _id: string;
@@ -22,7 +21,6 @@ interface ShoppingActionsProps {
 
 export default function ShoppingActions({ product }: ShoppingActionsProps) {
   const { data: session } = useSession();
-  const router = useRouter();
   const {
     cartCount,
     wishlistCount,
@@ -66,10 +64,6 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
   }
 
   const handleCartToggle = () => {
-    if (!session?.user) {
-      router.push("/login");
-      return;
-    }
     if (inCart) {
       removeFromCart(product._id);
     } else {
@@ -78,10 +72,6 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
   };
 
   const handleWishlistToggle = () => {
-    if (!session?.user) {
-      router.push("/login");
-      return;
-    }
     if (isInWishlist(product._id)) {
       removeFromWishlist(product._id);
     } else {
@@ -106,11 +96,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
               : "bg-indigo-600 text-white hover:bg-indigo-700"
         }`}
       >
-        {outOfStock
-          ? "Out of Stock"
-          : inCart
-            ? "✓ Added "
-            : "Add to Cart"}
+        {outOfStock ? "Out of Stock" : inCart ? "✓ Added" : "Add to Cart"}
       </button>
 
       <button
@@ -133,7 +119,7 @@ export default function ShoppingActions({ product }: ShoppingActionsProps) {
           >
             Sign in
           </Link>{" "}
-          to save items to your cart and wishlist
+          to save your cart across devices
         </p>
       )}
     </div>
