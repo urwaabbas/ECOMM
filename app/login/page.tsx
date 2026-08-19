@@ -42,16 +42,10 @@ function LoginForm() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    setError(null);
-    try {
-      await signIn("google", { callbackUrl: "/" });
-    } catch {
-      setError("Failed to sign in with Google. Please try again.");
-      setGoogleLoading(false);
-    }
-  };
+ const handleGoogleSignIn = () => {
+  setGoogleLoading(true);
+  window.location.href = "/api/auth/signin/google?callbackUrl=/";
+};
 
   return (
     <div className="flex min-h-screen flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-50">
