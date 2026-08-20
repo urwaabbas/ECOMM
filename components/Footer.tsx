@@ -6,50 +6,79 @@ export default function Footer() {
     <>
       <Newsletter />
       <footer className="mt-auto bg-gray-900 text-gray-400">
-        <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="grid grid-cols-3 gap-8">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+
             <div>
-              <h3 className="mb-2 font-bold text-white">Haanli Bazaar</h3>
-              <p className="text-sm">Online Shopping Store</p>
+              <h3 className="text-lg font-bold text-white mb-3">
+                Haanli Bazaar
+              </h3>
+              <p className="text-sm leading-relaxed">
+                Pakistan&apos;s trusted online marketplace. Free shipping nationwide and 7-day returns on every order.
+              </p>
             </div>
 
             <div>
-              <h3 className="mb-2 font-bold text-white">Quick Links</h3>
-              <div className="flex flex-col gap-2">
-                <Link href="/products" className="text-sm transition hover:text-white">
-                  Products
+              <h3 className="text-sm font-semibold text-white mb-4">Shop</h3>
+              <div className="flex flex-col gap-2.5">
+                <Link href="/products" className="text-sm hover:text-white transition">
+                  All Products
                 </Link>
-                <Link href="/cart" className="text-sm transition hover:text-white">
+                <Link href="/cart" className="text-sm hover:text-white transition">
                   Cart
                 </Link>
-                <Link href="/wishlist" className="text-sm transition hover:text-white">
+                <Link href="/wishlist" className="text-sm hover:text-white transition">
                   Wishlist
                 </Link>
-                <Link href="/contact" className="text-sm transition hover:text-white">
+                <Link href="/contact" className="text-sm hover:text-white transition">
                   Contact Us
                 </Link>
               </div>
             </div>
-            
+
             <div>
-              <h3 className="mb-2 font-bold text-white">Account</h3>
-              <div className="flex flex-col gap-2">
-                <Link href="/profile" className="text-sm transition hover:text-white">
-                  Profile
+              <h3 className="text-sm font-semibold text-white mb-4">Account</h3>
+              <div className="flex flex-col gap-2.5">
+                <Link href="/profile" className="text-sm hover:text-white transition">
+                  My Profile
                 </Link>
-                <Link href="/login" className="text-sm transition hover:text-white">
+                <Link href="/orders" className="text-sm hover:text-white transition">
+                  My Orders
+                </Link>
+                <Link href="/login" className="text-sm hover:text-white transition">
                   Login
                 </Link>
-                <Link href="/register" className="text-sm transition hover:text-white">
+                <Link href="/register" className="text-sm hover:text-white transition">
                   Register
                 </Link>
               </div>
             </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-4">Get in Touch</h3>
+              <div className="flex flex-col gap-2.5 text-sm">
+                <span>Pakistan</span>
+                <a href="mailto:urwaabbasahssan@gmail.com" className="hover:text-white transition break-all">
+                  urwaabbasahssan@gmail.com
+                </a>
+                <a href="https://haanlibazaar.vercel.app" className="hover:text-white transition">
+                  haanlibazaar.vercel.app
+                </a>
+              </div>
+            </div>
+
           </div>
-          
-          <div className="mt-8 border-t border-gray-800 pt-6 text-center text-xs">
-            © {new Date().getFullYear()} Haanli Bazaar. All Rights Reserved.
+
+          <div className="mt-12 border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-gray-500">
+              © {new Date().getFullYear()} Haanli Bazaar. All Rights Reserved.
+            </p>
+            <p className="text-xs text-gray-500">
+              Developed by Urwa Abbas
+            </p>
           </div>
+
         </div>
       </footer>
     </>

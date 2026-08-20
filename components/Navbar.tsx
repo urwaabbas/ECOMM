@@ -3,387 +3,792 @@
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useShopping } from "@/components/ShoppingProvider";
-import { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import UserNotificationBell from "@/components/UserNotificationBell";
+
+interface MegaMenuSection {
+  title: string;
+  items: string[];
+}
+
+const megaMenus: Record<string, MegaMenuSection[]> = {
+  "New & Featured": [
+    {
+      title: "Featured",
+      items: ["New Arrivals", "Best Sellers", "Trending", "Latest Products"],
+    },
+    {
+      title: "Shop",
+      items: ["Fashion", "Electronics", "Accessories", "Deals"],
+    },
+  ],
+
+  Men: [
+    {
+      title: "Clothing",
+      items: ["Shirts", "T-Shirts", "Jackets", "Jeans", "Shop All"],
+    },
+    {
+      title: "Shoes",
+      items: ["Sneakers", "Casual Shoes", "Sports Shoes", "Shop All"],
+    },
+    {
+      title: "Accessories",
+      items: ["Bags", "Watches", "Sunglasses", "Shop All"],
+    },
+  ],
+
+  Women: [
+    {
+      title: "Clothing",
+      items: ["Dresses", "Tops", "Jackets", "Jeans", "Shop All"],
+    },
+    {
+      title: "Shoes",
+      items: ["Sneakers", "Casual Shoes", "Sports Shoes", "Shop All"],
+    },
+    {
+      title: "Accessories",
+      items: ["Bags", "Watches", "Sunglasses", "Shop All"],
+    },
+  ],
+
+  Electronics: [
+    {
+      title: "Electronics",
+      items: ["Laptops", "Phones", "Headphones", "Cameras", "Shop All"],
+    },
+    {
+      title: "Accessories",
+      items: ["Chargers", "Cases", "Keyboards", "Power Banks"],
+    },
+  ],
+
+  Accessories: [
+    {
+      title: "Accessories",
+      items: ["Bags", "Watches", "Sunglasses", "Wallets", "Shop All"],
+    },
+  ],
+
+  Sale: [
+    {
+      title: "Sale",
+      items: ["Today's Deals", "Best Discounts", "Clearance", "Shop All Sale"],
+    },
+  ],
+};
+
+const mainNavigation = [
+  "New & Featured",
+  "Men",
+  "Women",
+  "Electronics",
+  "Accessories",
+  "Sale",
+];
 
 export default function Navbar() {
   const { data: session } = useSession();
   const { cartCount, wishlistCount } = useShopping();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const router = useRouter();
   const pathname = usePathname();
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    const parts = name.trim().split(" ");
-    if (parts.length >= 2)
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.charAt(0).toUpperCase();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [megaMenu, setMegaMenu] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [topAccountOpen, setTopAccountOpen] = useState(false);
+
+  const helpRef = useRef<HTMLDivElement>(null);
+  const topAccountRef = useRef<HTMLDivElement>(null);
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const value = search.trim();
+
+    if (!value) {
+      router.push("/products");
+      return;
+    }
+
+    router.push(`/products?search=${encodeURIComponent(value)}`);
+
+    setMenuOpen(false);
   };
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (helpRef.current && !helpRef.current.contains(event.target as Node)) {
+        setHelpOpen(false);
+      }
+
+      if (
+        topAccountRef.current &&
+        !topAccountRef.current.contains(event.target as Node)
+      ) {
+        setTopAccountOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
+  useEffect(() => {
+    setMenuOpen(false);
+    setMegaMenu(null);
+    setHelpOpen(false);
+    setTopAccountOpen(false);
+  }, [pathname]);
+
   return (
-    <>
-      <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white shadow-sm">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+    <header className="sticky top-0 z-50 bg-white">
+      {/* TOP UTILITY BAR */}
+
+      <div className="hidden border-b border-gray-100 bg-gray-50 md:block">
+        <div className="mx-auto flex h-9 max-w-7xl items-center justify-end px-6 text-xs font-semibold text-gray-900">
+          {/* HELP */}
+          <div
+            ref={helpRef}
+            className="relative"
+            onMouseEnter={() => {
+              setHelpOpen(true);
+              setTopAccountOpen(false);
+            }}
+            onMouseLeave={() => {
+              setHelpOpen(false);
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setHelpOpen((current) => !current);
+                setTopAccountOpen(false);
+              }}
+              className="px-4 py-2 transition hover:text-gray-500"
+            >
+              Help
+            </button>
+
+            {helpOpen && (
+              <div className="absolute right-0 top-9 z-[160] w-64 rounded-b-2xl bg-white px-6 py-5 shadow-xl">
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                  Help
+                </h3>
+
+                <div className="space-y-4">
+                  <Link
+                    href="/orders"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Order Status
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Shipping & Delivery
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Returns
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Order Cancellation
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Contact Us
+                  </Link>
+
+                  <Link
+                    href="/products"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Promotions & Discounts
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Product Advice
+                  </Link>
+
+                  <Link
+                    href="/contact"
+                    onClick={() => setHelpOpen(false)}
+                    className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                  >
+                    Send Us Feedback
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <span className="h-4 w-px bg-gray-300" />
+
+          {/* LOGGED IN USER */}
+
+          {session?.user ? (
+            <div
+              ref={topAccountRef}
+              className="relative flex items-center"
+              onMouseEnter={() => {
+                setTopAccountOpen(true);
+                setHelpOpen(false);
+              }}
+              onMouseLeave={() => {
+                setTopAccountOpen(false);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setTopAccountOpen((current) => !current);
+                  setHelpOpen(false);
+                }}
+                className="px-4 py-2 text-gray-700 transition hover:text-black"
+              >
+                Hi, {session.user.name?.split(" ")[0] || "User"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setTopAccountOpen((current) => !current);
+                  setHelpOpen(false);
+                }}
+                className="flex h-9 w-9 items-center justify-center text-gray-900 transition hover:text-gray-500"
+                aria-label="Account"
+              >
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM5 21a7 7 0 0114 0"
+                  />
+                </svg>
+              </button>
+
+              {topAccountOpen && (
+                <div className="absolute right-0 top-9 z-[160] w-64 rounded-b-2xl bg-white px-6 py-5 shadow-xl">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">
+                    Account
+                  </h3>
+
+                  <div className="space-y-4">
+                    <Link
+                      href="/profile"
+                      onClick={() => setTopAccountOpen(false)}
+                      className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                    >
+                      Profile
+                    </Link>
+
+                    <Link
+                      href="/orders"
+                      onClick={() => setTopAccountOpen(false)}
+                      className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                    >
+                      Orders
+                    </Link>
+
+                    <Link
+                      href="/wishlist"
+                      onClick={() => setTopAccountOpen(false)}
+                      className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                    >
+                      Favorites
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      onClick={() => setTopAccountOpen(false)}
+                      className="block text-sm font-medium text-gray-600 transition hover:text-black"
+                    >
+                      Account Settings
+                    </Link>
+
+                    {(
+                      session.user as {
+                        role?: string;
+                      }
+                    )?.role === "admin" && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setTopAccountOpen(false)}
+                        className="block text-sm font-semibold text-indigo-600 transition hover:text-indigo-800"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => signOut()}
+                      className="block w-full text-left text-sm font-medium text-gray-600 transition hover:text-black"
+                    >
+                      Log Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* NOT LOGGED IN */}
+
+              <Link
+                href="/register"
+                className="px-4 py-2 transition hover:text-gray-500"
+              >
+                Join Us
+              </Link>
+
+              <span className="h-4 w-px bg-gray-300" />
+
+              <Link
+                href="/login"
+                className="px-4 py-2 transition hover:text-gray-500"
+              >
+                Sign In
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* MAIN NAVBAR */}
+
+      <nav
+        className="relative border-b border-gray-100 bg-white"
+        onMouseLeave={() => setMegaMenu(null)}
+      >
+        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-6 px-4 md:px-6">
+          {/* LOGO */}
+
           <Link
             href="/"
-            className="text-lg font-black text-indigo-600 tracking-tight"
+            className="shrink-0 text-xl font-black tracking-tight text-indigo-600"
           >
             Haanli Bazaar
           </Link>
 
-          <div className="hidden items-center gap-1 md:flex">
-            <Link
-              href="/products"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                pathname === "/products"
-                  ? "text-indigo-600 bg-indigo-50"
-                  : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
-              }`}
-            >
-              Products
-            </Link>
-            <Link
-              href="/orders"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                pathname === "/orders"
-                  ? "text-indigo-600 bg-indigo-50"
-                  : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
-              }`}
-            >
-              Orders
-            </Link>
-            <Link
-              href="/contact"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                pathname === "/contact"
-                  ? "text-indigo-600 bg-indigo-50"
-                  : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50"
-              }`}
-            >
-              Contact
-            </Link>
+          {/* DESKTOP CATEGORIES */}
+
+          <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
+            {mainNavigation.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onMouseEnter={() => setMegaMenu(item)}
+                onFocus={() => setMegaMenu(item)}
+                className={`relative px-3 py-7 text-sm font-semibold transition xl:text-[15px] ${
+                  item === "Sale"
+                    ? "text-red-600"
+                    : "text-gray-900 hover:text-indigo-600"
+                }`}
+              >
+                {item}
+
+                {megaMenu === item && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gray-900" />
+                )}
+              </button>
+            ))}
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          {/* DESKTOP ACTIONS */}
+
+          <div className="hidden shrink-0 items-center gap-2 md:flex">
+            {/* SEARCH */}
+
+            <form onSubmit={handleSearch} className="relative hidden xl:block">
+              <svg
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m21 21-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search"
+                className="h-11 w-52 rounded-full bg-gray-100 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-500 hover:bg-gray-200 focus:bg-white focus:ring-2 focus:ring-gray-200 2xl:w-64"
+              />
+            </form>
+
+            {/* SEARCH ICON FOR MEDIUM SCREENS */}
+
+            <button
+              type="button"
+              onClick={() => router.push("/products")}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-gray-800 transition hover:bg-gray-100 xl:hidden"
+              title="Search"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m21 21-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+
+            {/* WISHLIST */}
+
             <Link
               href="/wishlist"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-800 transition hover:bg-gray-100"
               title="Wishlist"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
               </svg>
+
               {wishlistCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-pink-500 text-[9px] font-bold text-white ring-2 ring-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-500 px-1 text-[9px] font-bold text-white">
                   {wishlistCount > 9 ? "9+" : wishlistCount}
                 </span>
               )}
             </Link>
 
+            {/* CART */}
+
             <Link
               href="/cart"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-600 transition hover:bg-gray-100 hover:text-indigo-600"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-800 transition hover:bg-gray-100"
               title="Cart"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
+
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white ring-2 ring-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-bold text-white">
                   {cartCount > 9 ? "9+" : cartCount}
                 </span>
               )}
             </Link>
 
-            {session?.user ? (
-              <div className="flex items-center gap-3">
-                <UserNotificationBell />
-
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen((prev) => !prev)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white transition hover:bg-indigo-700"
-                    title="Account"
-                  >
-                    {getInitials(session.user.name)}
-                  </button>
-
-                  {dropdownOpen && (
-                    <div className="absolute right-0 top-11 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {session.user.name}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">
-                          {session.user.email}
-                        </p>
-                      </div>
-
-                      <div className="py-1">
-                        <Link
-                          href="/profile"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                        >
-                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          My Profile
-                        </Link>
-
-                        <Link
-                          href="/orders"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                        >
-                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                          </svg>
-                          My Orders
-                        </Link>
-
-                        <Link
-                          href="/wishlist"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
-                        >
-                          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                          My Wishlist
-                        </Link>
-
-                        {(session?.user as any)?.role === "admin" && (
-                          <Link
-                            href="/admin"
-                            onClick={() => setDropdownOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition"
-                          >
-                            <svg className="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Admin Dashboard
-                          </Link>
-                        )}
-                      </div>
-
-                      <div className="border-t border-gray-100 py-1">
-                        <button
-                          type="button"
-                          onClick={() => { signOut(); setDropdownOpen(false); }}
-                          className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition"
-                        >
-                          <svg className="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
-                          Logout
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/login"
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-indigo-600"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                >
-                  Register
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 md:hidden">
-            <Link
-              href="/cart"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-600 transition hover:bg-gray-100"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white ring-2 ring-white">
-                  {cartCount > 9 ? "9+" : cartCount}
-                </span>
-              )}
-            </Link>
+            {/* NOTIFICATIONS */}
 
             {session?.user && <UserNotificationBell />}
+          </div>
+
+          {/* MOBILE CONTROLS */}
+
+          <div className="flex items-center gap-1 md:hidden">
+            {session?.user && <UserNotificationBell />}
+
+            <Link
+              href="/cart"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-gray-800 transition hover:bg-gray-100"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.8}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+
+              {cartCount > 0 && (
+                <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[9px] font-bold text-white">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
 
             <button
               type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-600 transition hover:bg-gray-100"
               onClick={() => setMenuOpen((current) => !current)}
-              aria-label="Toggle navigation menu"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-gray-800 transition hover:bg-gray-100"
+              aria-label="Toggle menu"
             >
               {menuOpen ? (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
           </div>
         </div>
 
+        {/* MEGA MENU */}
+
+        {megaMenu && megaMenus[megaMenu] && (
+          <div className="absolute left-0 right-0 top-full hidden border-t border-gray-100 bg-white shadow-lg lg:block">
+            <div className="mx-auto grid max-w-6xl grid-cols-2 gap-12 px-8 py-9 md:grid-cols-3 lg:grid-cols-4">
+              {megaMenus[megaMenu].map((section) => (
+                <div key={section.title}>
+                  <h3 className="mb-4 text-sm font-semibold text-gray-900">
+                    {section.title}
+                  </h3>
+
+                  <div className="space-y-3">
+                    {section.items.map((item) => (
+                      <Link
+                        key={item}
+                        href="/products"
+                        onClick={() => setMegaMenu(null)}
+                        className="block text-sm text-gray-500 transition hover:text-gray-900"
+                      >
+                        {item}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* MOBILE MENU */}
+
         {menuOpen && (
-          <div className="border-t border-gray-100 bg-white px-4 py-3 md:hidden">
-            <div className="space-y-1">
-              <Link
-                href="/products"
-                onClick={() => setMenuOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                  pathname === "/products"
-                    ? "bg-indigo-50 text-indigo-600"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
-                }`}
+          <div className="border-t border-gray-100 bg-white px-5 pb-6 pt-4 md:hidden">
+            {/* MOBILE SEARCH */}
+
+            <form onSubmit={handleSearch} className="relative mb-5">
+              <svg
+                className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                Products
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="m21 21-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search products"
+                className="h-12 w-full rounded-full bg-gray-100 pl-12 pr-4 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-gray-200"
+              />
+            </form>
+
+            {/* MOBILE SHOPPING LINKS */}
+
+            <div className="border-b border-gray-100 pb-4">
+              {mainNavigation.map((item) => (
+                <Link
+                  key={item}
+                  href="/products"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center justify-between py-3 text-lg font-semibold ${
+                    item === "Sale" ? "text-red-600" : "text-gray-900"
+                  }`}
+                >
+                  {item}
+
+                  <span className="text-xl font-normal text-gray-400">›</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* MOBILE ACCOUNT LINKS */}
+
+            <div className="space-y-1 pt-4">
+              <Link
+                href="/orders"
+                onClick={() => setMenuOpen(false)}
+                className="block py-2.5 text-sm font-medium text-gray-700"
+              >
+                Order Status
               </Link>
 
               <Link
                 href="/wishlist"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-indigo-600"
+                className="flex items-center justify-between py-2.5 text-sm font-medium text-gray-700"
               >
-                <div className="flex items-center gap-3">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  Wishlist
-                </div>
+                Wishlist
                 {wishlistCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-pink-500 px-2 py-0.5 text-[10px] font-bold text-white">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
 
               <Link
-                href="/cart"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-indigo-600"
-              >
-                <div className="flex items-center gap-3">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Cart
-                </div>
-                {cartCount > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                href="/orders"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-indigo-600"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Orders
-              </Link>
-
-              <Link
                 href="/contact"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-indigo-600"
+                className="block py-2.5 text-sm font-medium text-gray-700"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                Contact
+                Help & Contact
               </Link>
 
-              {(session?.user as any)?.role === "admin" && (
-                <Link
-                  href="/admin"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Admin Dashboard
-                </Link>
-              )}
-            </div>
-
-            <div className="mt-3 border-t border-gray-100 pt-3">
               {session?.user ? (
-                <div className="flex items-center justify-between">
+                <>
+                  <div className="my-3 border-t border-gray-100" />
+
+                  <p className="pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                    Account
+                  </p>
+
                   <Link
                     href="/profile"
                     onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-3"
+                    className="block py-2.5 text-sm font-medium text-gray-700"
                   >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                      {getInitials(session.user.name)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {session.user.name}
-                      </p>
-                      <p className="text-xs text-gray-400">{session.user.email}</p>
-                    </div>
+                    Profile
                   </Link>
+
+                  <Link
+                    href="/orders"
+                    onClick={() => setMenuOpen(false)}
+                    className="block py-2.5 text-sm font-medium text-gray-700"
+                  >
+                    Orders
+                  </Link>
+
+                  {(
+                    session.user as {
+                      role?: string;
+                    }
+                  )?.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setMenuOpen(false)}
+                      className="block py-2.5 text-sm font-semibold text-indigo-600"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => { signOut(); setMenuOpen(false); }}
-                    className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 transition hover:bg-red-50"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      signOut();
+                    }}
+                    className="block py-2.5 text-sm font-medium text-red-500"
                   >
-                    Logout
+                    Log Out
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-4">
                   <Link
                     href="/login"
                     onClick={() => setMenuOpen(false)}
-                    className="flex-1 rounded-xl border border-gray-200 py-2.5 text-center text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="flex-1 rounded-full border border-gray-300 py-2.5 text-center text-sm font-semibold text-gray-800"
                   >
-                    Login
+                    Sign In
                   </Link>
+
                   <Link
                     href="/register"
                     onClick={() => setMenuOpen(false)}
-                    className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
+                    className="flex-1 rounded-full bg-gray-900 py-2.5 text-center text-sm font-semibold text-white"
                   >
-                    Register
+                    Join Us
                   </Link>
                 </div>
               )}
@@ -391,6 +796,6 @@ export default function Navbar() {
           </div>
         )}
       </nav>
-    </>
+    </header>
   );
 }
