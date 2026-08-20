@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 import { useShopping } from "@/components/ShoppingProvider";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -399,13 +400,22 @@ export default function Navbar() {
         onMouseLeave={() => setMegaMenu(null)}
       >
         <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-6 px-4 md:px-6">
-          {/* LOGO */}
+
+          {/*Logo*/}
 
           <Link
             href="/"
-            className="shrink-0 text-xl font-black tracking-tight text-indigo-600"
+            className="flex shrink-0 items-center"
+            aria-label="Haanli Bazaar Home"
           >
-            Haanli Bazaar
+            <Image
+              src="/haanlibazaar_logo.png"
+              alt="Haanli Bazaar"
+              width={220}
+              height={50}
+              priority
+            className="h-12 w-auto object-contain"
+            />
           </Link>
 
           {/* DESKTOP CATEGORIES */}

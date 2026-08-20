@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#B2182B" />
+  
+  <!-- Bag Body (Scaled 1.25x) -->
+  <path d="M 136 161 
+           C 136 148, 146 136, 161 136 
+           L 351 136 
+           C 366 136, 376 148, 376 161 
+           L 411 448 
+           C 413 467, 398 481, 380 481 
+           L 132 481 
+           C 114 481, 99 467, 101 448 
+           Z" 
+        fill="#FFFFFF" />
+
+  <!-- Bag Handles (Scaled 1.25x) -->
+  <path d="M 186 155 V 92 C 186 55, 326 55, 326 92 V 155" 
+        fill="none" 
+        stroke="#FFFFFF" 
+        stroke-width="27" 
+        stroke-linecap="round" />
+  
+  <!-- Handle Knobs (Scaled 1.25x) -->
+  <circle cx="186" cy="161" r="20" fill="#B2182B" />
+  <circle cx="326" cy="161" r="20" fill="#B2182B" />
+
+  <!-- Monogram Elements (Scaled 1.25x) -->
+  <!-- 'H' Overlay Shape -->
+  <path d="M 186 198 H 236 V 298 H 276 V 198 H 326 V 461 H 276 V 348 H 236 V 461 H 186 Z" fill="#B2182B" />
+
+  <!-- 'B' Overlay Shape -->
+  <path d="M 236 336 H 292 C 323 336, 342 348, 342 371 C 342 388, 326 398, 301 401 C 333 405, 348 421, 348 442 C 348 467, 323 481, 286 481 H 236 Z 
+           M 271 361 V 388 H 288 C 305 388, 311 380, 311 371 C 311 361, 301 361, 288 361 Z 
+           M 271 413 V 453 H 292 C 308 453, 317 443, 317 433 C 317 421, 306 413, 288 413 Z" 
+        fill="#1A1A1A" />
+</svg>
