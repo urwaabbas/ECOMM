@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
 import { getProductImageUrl } from "@/lib/product-image";
-import mongoose from "mongoose";
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -23,7 +23,10 @@ function normalizeProduct(product: any) {
           slug: product.category.slug ?? "uncategorized",
         }
       : {
-          _id: typeof product.category === "string" ? product.category : "",
+          _id:
+            typeof product.category === "string"
+              ? product.category
+              : "",
           name: "Uncategorized",
           slug: "uncategorized",
         };
@@ -53,66 +56,130 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const category = searchParams.get("category");
-    const subcategory = searchParams.get("subcategory")?.trim();
+    const categories = searchParams
+      .getAll("category")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    const subcategories = searchParams
+      .getAll("subcategory")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
     const featured = searchParams.get("featured");
     const sale = searchParams.get("sale");
     const sort = searchParams.get("sort");
     const search = searchParams.get("search")?.trim();
 
-    const requestedPage = parseInt(searchParams.get("page") || "1", 10);
+    const requestedPage = parseInt(
+      searchParams.get("page") || "1",
+      10,
+    );
+
     const page =
-      Number.isNaN(requestedPage) || requestedPage < 1 ? 1 : requestedPage;
+      Number.isNaN(requestedPage) || requestedPage < 1
+        ? 1
+        : requestedPage;
 
     const limit = 12;
     const skip = (page - 1) * limit;
 
     await dbConnect();
 
-    const sortMapping: Record<string, 1 | -1> = {
-      price_asc: 1,
-      price_desc: -1,
-    };
-
     const queryFilter: Record<string, any> = {};
 
-    if (category && category !== "All") {
-      const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+    /*
+     * MULTIPLE CATEGORY FILTER
+     *
+     * Supports:
+     * ?category=Men&category=Women
+     *
+     * and ObjectId category values too.
+     */
+    if (categories.length > 0) {
+      const objectIdCategories: mongoose.Types.ObjectId[] = [];
+      const categoryNames: string[] = [];
 
-      if (isObjectId) {
-        queryFilter.category = category;
-      } else {
-        const categoryDoc = (await Category.findOne({
-          $or: [
+      categories.forEach((category) => {
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+
+        if (isObjectId) {
+          objectIdCategories.push(
+            new mongoose.Types.ObjectId(category),
+          );
+        } else {
+          categoryNames.push(category);
+        }
+      });
+
+      let categoryIds: mongoose.Types.ObjectId[] = [
+        ...objectIdCategories,
+      ];
+
+      if (categoryNames.length > 0) {
+        const categoryConditions = categoryNames.flatMap(
+          (categoryName) => [
             {
               name: {
-                $regex: `^${escapeRegex(category)}$`,
+                $regex: `^${escapeRegex(categoryName)}$`,
                 $options: "i",
               },
             },
             {
-              slug: category.toLowerCase(),
+              slug: categoryName
+                .toLowerCase()
+                .replace(/\s+/g, "-"),
             },
           ],
+        );
+
+        const categoryDocs = (await Category.find({
+          $or: categoryConditions,
         })
           .select("_id")
-          .lean()) as { _id: mongoose.Types.ObjectId } | null;
+          .lean()) as {
+          _id: mongoose.Types.ObjectId;
+        }[];
 
-        queryFilter.category = categoryDoc?._id ?? null;
+        categoryIds = [
+          ...categoryIds,
+          ...categoryDocs.map((category) => category._id),
+        ];
       }
-    }
 
-    if (subcategory) {
-      queryFilter.subcategory = {
-        $regex: `^${escapeRegex(subcategory)}$`,
-        $options: "i",
+      queryFilter.category = {
+        $in: categoryIds,
       };
     }
 
+    /*
+     * MULTIPLE PRODUCT TYPE / SUBCATEGORY FILTER
+     *
+     * Supports:
+     * ?subcategory=Jackets&subcategory=Jeans
+     */
+    if (subcategories.length > 0) {
+      queryFilter.subcategory = {
+        $in: subcategories.map(
+          (subcategory) =>
+            new RegExp(
+              `^${escapeRegex(subcategory)}$`,
+              "i",
+            ),
+        ),
+      };
+    }
+
+    /*
+     * FEATURED FILTER
+     */
     if (featured === "true") {
       queryFilter.isFeatured = true;
     }
 
+    /*
+     * SALE FILTER
+     */
     if (sale === "true") {
       queryFilter.discountPrice = {
         $ne: null,
@@ -124,6 +191,9 @@ export async function GET(request: Request) {
       };
     }
 
+    /*
+     * SEARCH
+     */
     if (search) {
       queryFilter.$or = [
         {
@@ -141,26 +211,35 @@ export async function GET(request: Request) {
       ];
     }
 
-    const totalProducts = await Product.countDocuments(queryFilter);
+    const totalProducts =
+      await Product.countDocuments(queryFilter);
 
-    const totalPages = Math.ceil(totalProducts / limit);
+    const totalPages = Math.ceil(
+      totalProducts / limit,
+    );
 
     let productCursor = Product.find(queryFilter)
       .populate("category", "name slug")
       .skip(skip)
       .limit(limit);
 
-    const sortDirection = sortMapping[sort ?? ""];
-
-    if (sortDirection) {
+    if (sort === "price_asc") {
       productCursor = productCursor.sort({
-        price: sortDirection,
+        price: 1,
       });
     }
 
-    const fetchedProducts = await productCursor.lean().exec();
+    if (sort === "price_desc") {
+      productCursor = productCursor.sort({
+        price: -1,
+      });
+    }
 
-    const products = fetchedProducts.map(normalizeProduct);
+    const fetchedProducts =
+      await productCursor.lean().exec();
+
+    const products =
+      fetchedProducts.map(normalizeProduct);
 
     return NextResponse.json(
       {
@@ -170,17 +249,24 @@ export async function GET(request: Request) {
         totalPages,
         currentPage: page,
       },
-      { status: 200 },
+      {
+        status: 200,
+      },
     );
   } catch (error: any) {
-    console.error("Products API error:", error.message);
+    console.error(
+      "Products API error:",
+      error.message,
+    );
 
     return NextResponse.json(
       {
         success: false,
         error: error.message,
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

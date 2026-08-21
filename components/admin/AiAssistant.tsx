@@ -402,7 +402,7 @@ export default function AIAssistant() {
         }
       `}</style>
 
-      <div style={{ position: "fixed", bottom: "20px", left: "20px", zIndex: 200 }}>
+      <div style={{ position: "fixed", bottom: "20px", left: "20px", zIndex: 50}}>
         {open && (
           <div className="wazir-window">
             <div className="wazir-header">
