@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
-import React, { useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useShopping } from "@/components/ShoppingProvider";
 import { formatPricePKR } from "@/lib/utilis";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface Category {
   _id: string;
@@ -23,13 +21,18 @@ interface Product {
   images: string[];
   stock: number;
   isFeatured: boolean;
-  ratings: { average: number; count: number };
+  ratings: {
+    average: number;
+    count: number;
+  };
   category: Category;
+  subcategory?: string;
 }
 
 function ProductGridContent() {
-  const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
   const {
     addToCart,
     removeFromCart,
@@ -43,23 +46,33 @@ function ProductGridContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+
   const [sort, setSort] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [onSaleOnly, setOnSaleOnly] = useState(false);
 
-  const searchParams = useSearchParams();
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+
   const categoryFromUrl = searchParams.get("category");
+  const subcategoryFromUrl = searchParams.get("subcategory") || "";
+  const searchFromUrl = searchParams.get("search") || "";
+  const featuredFromUrl = searchParams.get("featured") === "true";
+  const saleFromUrl = searchParams.get("sale") === "true";
 
   useEffect(() => {
     async function fetchCategories() {
       try {
         const res = await fetch("/api/categories");
         const data = await res.json();
+
         if (data.success && Array.isArray(data.categories)) {
           setCategories(data.categories);
         }
@@ -67,61 +80,133 @@ function ProductGridContent() {
         console.error("Failed to load categories:", err);
       }
     }
+
     fetchCategories();
   }, []);
 
   useEffect(() => {
-    if (categoryFromUrl && categories.length > 0) {
-      const matched = categories.find(
-        (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase(),
-      );
-      if (matched) setSelectedCategories([matched._id]);
+    if (categories.length === 0) return;
+
+    if (!categoryFromUrl) {
+      setSelectedCategories([]);
+      return;
+    }
+
+    const matched = categories.find(
+      (cat) => cat.name.toLowerCase() === categoryFromUrl.toLowerCase(),
+    );
+
+    if (matched) {
+      setSelectedCategories([matched._id]);
+    } else {
+      setSelectedCategories([]);
     }
   }, [categoryFromUrl, categories]);
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(search), 400);
+    setSearch(searchFromUrl);
+    setSelectedSubcategory(subcategoryFromUrl);
+    setFeaturedOnly(featuredFromUrl);
+    setOnSaleOnly(saleFromUrl);
+  }, [
+    searchFromUrl,
+    subcategoryFromUrl,
+    featuredFromUrl,
+    saleFromUrl,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+
     return () => clearTimeout(handler);
   }, [search]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, selectedCategories, sort, onSaleOnly]);
+  }, [
+    debouncedSearch,
+    selectedCategories,
+    selectedSubcategory,
+    sort,
+    onSaleOnly,
+    featuredOnly,
+  ]);
 
   useEffect(() => {
     async function fetchFilteredProducts() {
       setLoadingProducts(true);
 
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCategories.length === 1)
-        params.append("category", selectedCategories[0]);
-      if (sort) params.append("sort", sort);
-      params.append("page", currentPage.toString());
+      try {
+        const params = new URLSearchParams();
 
-      const res = await fetch(`/api/products?${params.toString()}`);
-      const data = await res.json();
-
-      if (data.success) {
-        let filtered = data.products;
-        if (selectedCategories.length > 1) {
-          filtered = filtered.filter((p: Product) =>
-            selectedCategories.includes(p.category._id),
-          );
+        if (debouncedSearch) {
+          params.append("search", debouncedSearch);
         }
+
+        if (selectedCategories.length === 1) {
+          params.append("category", selectedCategories[0]);
+        }
+
+        if (selectedSubcategory) {
+          params.append("subcategory", selectedSubcategory);
+        }
+
+        if (featuredOnly) {
+          params.append("featured", "true");
+        }
+
         if (onSaleOnly) {
-          filtered = filtered.filter(
-            (p: Product) => p.discountPrice !== null && p.discountPrice > 0,
-          );
+          params.append("sale", "true");
         }
-        setProducts(filtered);
-        setTotalPages(data.totalPages || 1);
-        setTotalProducts(data.totalProducts || 0);
+
+        if (sort) {
+          params.append("sort", sort);
+        }
+
+        params.append("page", currentPage.toString());
+
+        const res = await fetch(`/api/products?${params.toString()}`);
+        const data = await res.json();
+
+        if (data.success) {
+          let filtered = data.products;
+
+          if (selectedCategories.length > 1) {
+            filtered = filtered.filter((product: Product) =>
+              selectedCategories.includes(product.category._id),
+            );
+          }
+
+          setProducts(filtered);
+          setTotalPages(data.totalPages || 1);
+          setTotalProducts(data.totalProducts || 0);
+        } else {
+          setProducts([]);
+          setTotalPages(1);
+          setTotalProducts(0);
+        }
+      } catch (err) {
+        console.error("Failed to load products:", err);
+        setProducts([]);
+        setTotalPages(1);
+        setTotalProducts(0);
+      } finally {
+        setLoadingProducts(false);
       }
-      setLoadingProducts(false);
     }
+
     fetchFilteredProducts();
-  }, [debouncedSearch, selectedCategories, sort, currentPage, onSaleOnly]);
+  }, [
+    debouncedSearch,
+    selectedCategories,
+    selectedSubcategory,
+    sort,
+    currentPage,
+    onSaleOnly,
+    featuredOnly,
+  ]);
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -131,25 +216,52 @@ function ProductGridContent() {
     );
   };
 
-  const normalizeProduct = (p: Product) => ({
-    ...p,
-    _id: p._id.toString(),
-    images: p.images,
+  const removeUrlFilter = (key: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete(key);
+
+    const query = params.toString();
+
+    router.push(query ? `/products?${query}` : "/products");
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedSubcategory("");
+    setSearch("");
+    setDebouncedSearch("");
+    setSort("");
+    setOnSaleOnly(false);
+    setFeaturedOnly(false);
+    setCurrentPage(1);
+
+    router.push("/products");
+  };
+
+  const normalizeProduct = (product: Product) => ({
+    ...product,
+    _id: product._id.toString(),
+    images: product.images,
   });
 
-  const pid = (p: Product) => p._id.toString();
+  const pid = (product: Product) => product._id.toString();
 
-  const handleCartToggle = (p: Product) => {
-    if (isInCart(pid(p))) {
-      removeFromCart(pid(p));
+  const handleCartToggle = (product: Product) => {
+    if (isInCart(pid(product))) {
+      removeFromCart(pid(product));
     } else {
-      addToCart(normalizeProduct(p));
+      addToCart(normalizeProduct(product));
     }
-    if (isInCart(pid(p))) {
-      removeFromCart(pid(p));
-    } else {
-      addToCart(normalizeProduct(p));
+  };
+
+  const handleSaleToggle = () => {
+    if (saleFromUrl) {
+      removeUrlFilter("sale");
+      return;
     }
+
+    setOnSaleOnly((prev) => !prev);
   };
 
   return (
@@ -163,6 +275,7 @@ function ProductGridContent() {
             >
               Search Products
             </label>
+
             <input
               id="search"
               type="text"
@@ -172,6 +285,7 @@ function ProductGridContent() {
               className="w-full rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
             />
           </div>
+
           <div>
             <label
               htmlFor="sort"
@@ -179,6 +293,7 @@ function ProductGridContent() {
             >
               Sort by price
             </label>
+
             <select
               id="sort"
               value={sort}
@@ -192,18 +307,41 @@ function ProductGridContent() {
           </div>
         </div>
 
-        {(selectedCategories.length > 0 || onSaleOnly) && (
+        {(selectedCategories.length > 0 ||
+          selectedSubcategory ||
+          featuredOnly ||
+          onSaleOnly) && (
           <div className="mt-4 flex flex-wrap gap-2">
             {selectedCategories.map((id) => {
-              const cat = categories.find((c) => c._id === id);
+              const cat = categories.find((category) => category._id === id);
+
               return (
                 <span
                   key={id}
                   className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full"
                 >
                   {cat?.name}
+
                   <button
-                    onClick={() => toggleCategory(id)}
+                    type="button"
+                    onClick={() => {
+                      if (categoryFromUrl) {
+                        const params = new URLSearchParams(
+                          searchParams.toString(),
+                        );
+
+                        params.delete("category");
+                        params.delete("subcategory");
+
+                        const query = params.toString();
+
+                        router.push(
+                          query ? `/products?${query}` : "/products",
+                        );
+                      } else {
+                        toggleCategory(id);
+                      }
+                    }}
                     className="ml-1 hover:text-indigo-900"
                   >
                     ×
@@ -211,24 +349,58 @@ function ProductGridContent() {
                 </span>
               );
             })}
+
+            {selectedSubcategory && (
+              <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full">
+                {selectedSubcategory}
+
+                <button
+                  type="button"
+                  onClick={() => removeUrlFilter("subcategory")}
+                  className="ml-1 hover:text-red-600"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {featuredOnly && (
+              <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
+                Featured
+
+                <button
+                  type="button"
+                  onClick={() => removeUrlFilter("featured")}
+                  className="ml-1 hover:text-indigo-900"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
             {onSaleOnly && (
               <span className="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">
-                🏷 On Sale
+                On Sale
+
                 <button
-                  onClick={() => setOnSaleOnly(false)}
+                  type="button"
+                  onClick={() => {
+                    if (saleFromUrl) {
+                      removeUrlFilter("sale");
+                    } else {
+                      setOnSaleOnly(false);
+                    }
+                  }}
                   className="ml-1 hover:text-red-900"
                 >
                   ×
                 </button>
               </span>
             )}
+
             <button
-              onClick={() => {
-                setSelectedCategories([]);
-                setSearch("");
-                setSort("");
-                setOnSaleOnly(false);
-              }}
+              type="button"
+              onClick={clearAllFilters}
               className="text-xs text-gray-400 hover:text-red-500 transition"
             >
               Clear all
@@ -243,13 +415,33 @@ function ProductGridContent() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">
               Categories
             </p>
+
             <p className="mt-2 text-sm text-gray-600">
               Select one or more categories.
             </p>
           </div>
+
           <div className="space-y-2">
             <button
-              onClick={() => setSelectedCategories([])}
+              type="button"
+              onClick={() => {
+                setSelectedCategories([]);
+
+                if (categoryFromUrl || subcategoryFromUrl) {
+                  const params = new URLSearchParams(
+                    searchParams.toString(),
+                  );
+
+                  params.delete("category");
+                  params.delete("subcategory");
+
+                  const query = params.toString();
+
+                  router.push(
+                    query ? `/products?${query}` : "/products",
+                  );
+                }
+              }}
               className={`w-full text-left px-4 py-3 rounded-2xl border transition ${
                 selectedCategories.length === 0
                   ? "border-indigo-300 bg-indigo-50 text-indigo-700"
@@ -258,10 +450,21 @@ function ProductGridContent() {
             >
               All Categories
             </button>
+
             {categories.map((cat) => (
               <button
                 key={cat._id}
-                onClick={() => toggleCategory(cat._id)}
+                type="button"
+                onClick={() => {
+                  if (categoryFromUrl || subcategoryFromUrl) {
+                    router.push(
+                      `/products?category=${encodeURIComponent(cat.name)}`,
+                    );
+                    return;
+                  }
+
+                  toggleCategory(cat._id);
+                }}
                 className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between ${
                   selectedCategories.includes(cat._id)
                     ? "border-indigo-300 bg-indigo-50 text-indigo-700"
@@ -269,6 +472,7 @@ function ProductGridContent() {
                 }`}
               >
                 <span>{cat.name}</span>
+
                 {selectedCategories.includes(cat._id) && (
                   <span className="text-indigo-600 font-bold">✓</span>
                 )}
@@ -277,17 +481,16 @@ function ProductGridContent() {
 
             <div className="mt-4 pt-4 border-t border-gray-100">
               <button
-                onClick={() => setOnSaleOnly((prev) => !prev)}
+                type="button"
+                onClick={handleSaleToggle}
                 className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between ${
                   onSaleOnly
                     ? "border-red-300 bg-red-50 text-red-700"
                     : "border-gray-200 bg-gray-50 text-gray-700 hover:border-red-300 hover:bg-red-50/50"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span>🏷</span>
-                  <span className="font-medium">On Sale</span>
-                </div>
+                <span className="font-medium">On Sale</span>
+
                 {onSaleOnly && (
                   <span className="text-red-600 font-bold">✓</span>
                 )}
@@ -310,9 +513,9 @@ function ProductGridContent() {
                   key={i}
                   className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96"
                 >
-                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                  <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
-                  <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4" />
+                  <div className="bg-gray-200 h-4 w-2/3 rounded mb-2" />
+                  <div className="bg-gray-200 h-4 w-1/2 rounded" />
                 </div>
               ))}
             </div>
@@ -321,13 +524,10 @@ function ProductGridContent() {
               <p className="text-gray-500">
                 No products found matching your filters.
               </p>
+
               <button
-                onClick={() => {
-                  setSelectedCategories([]);
-                  setSearch("");
-                  setSort("");
-                  setOnSaleOnly(false);
-                }}
+                type="button"
+                onClick={clearAllFilters}
                 className="mt-4 text-sm text-indigo-600 hover:underline"
               >
                 Clear all filters
@@ -336,52 +536,74 @@ function ProductGridContent() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {products.map((p) => {
-                  const inCart = isInCart(pid(p));
-                  const inWishlist = isInWishlist(pid(p));
-                  const outOfStock = p.stock === 0;
-                  const discountPercent = p.discountPrice
-                    ? Math.round(((p.price - p.discountPrice) / p.price) * 100)
+                {products.map((product) => {
+                  const inCart = isInCart(pid(product));
+                  const inWishlist = isInWishlist(pid(product));
+                  const outOfStock = product.stock === 0;
+
+                  const discountPercent = product.discountPrice
+                    ? Math.round(
+                        ((product.price - product.discountPrice) /
+                          product.price) *
+                          100,
+                      )
                     : null;
 
                   return (
                     <div
-                      key={pid(p)}
+                      key={pid(product)}
                       className="bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col justify-between"
                     >
                       <div>
-                        <Link href={`/products/${pid(p)}`} className="block">
+                        <Link
+                          href={`/products/${pid(product)}`}
+                          className="block"
+                        >
                           <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
                             <img
-                              src={p.images[0]}
-                              alt={p.title}
+                              src={product.images[0]}
+                              alt={product.title}
                               className="w-full h-full object-cover"
                             />
-                            {p.isFeatured && (
+
+                            {product.isFeatured && (
                               <span className="absolute top-3 left-3 bg-indigo-600 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
                                 Featured
                               </span>
                             )}
+
                             {discountPercent && (
                               <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded shadow-sm">
                                 {discountPercent}% OFF
                               </span>
                             )}
                           </div>
+
                           <div className="p-4">
                             <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
-                              {p.category?.name}
+                              {product.category?.name}
                             </p>
+
+                            {product.subcategory && (
+                              <p className="mt-1 text-[11px] text-gray-400">
+                                {product.subcategory}
+                              </p>
+                            )}
+
                             <h3 className="font-bold text-gray-800 mt-1">
-                              {p.title}
+                              {product.title}
                             </h3>
+
                             <div className="flex items-baseline gap-2 mt-2">
                               <span className="text-gray-900 font-semibold">
-                                {formatPricePKR(p.discountPrice || p.price)}
+                                {formatPricePKR(
+                                  product.discountPrice || product.price,
+                                )}
                               </span>
-                              {p.discountPrice && (
+
+                              {product.discountPrice && (
                                 <span className="text-xs text-gray-400 line-through">
-                                  {formatPricePKR(p.price)}
+                                  {formatPricePKR(product.price)}
                                 </span>
                               )}
                             </div>
@@ -392,7 +614,8 @@ function ProductGridContent() {
                       <div className="px-4 pb-4 space-y-2">
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleCartToggle(p)}
+                            type="button"
+                            onClick={() => handleCartToggle(product)}
                             disabled={outOfStock || loading}
                             className={`flex-1 rounded-md px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] transition ${
                               outOfStock
@@ -408,11 +631,15 @@ function ProductGridContent() {
                                 ? "✓ Added"
                                 : "Add to Cart"}
                           </button>
+
                           <button
+                            type="button"
                             onClick={() =>
                               inWishlist
-                                ? removeFromWishlist(pid(p))
-                                : addToWishlist(normalizeProduct(p))
+                                ? removeFromWishlist(pid(product))
+                                : addToWishlist(
+                                    normalizeProduct(product),
+                                  )
                             }
                             className={`w-11 rounded-md border text-lg transition ${
                               inWishlist
@@ -423,8 +650,9 @@ function ProductGridContent() {
                             {inWishlist ? "♥" : "♡"}
                           </button>
                         </div>
+
                         <Link
-                          href={`/products/${pid(p)}`}
+                          href={`/products/${pid(product)}`}
                           className="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-gray-700 transition hover:bg-gray-50"
                         >
                           View Details
@@ -438,31 +666,39 @@ function ProductGridContent() {
               {totalPages > 1 && (
                 <div className="mt-10 flex items-center justify-center gap-2">
                   <button
-                    onClick={() => setCurrentPage((p) => p - 1)}
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) => page - 1)
+                    }
                     disabled={currentPage === 1}
                     className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
                   >
                     ← Previous
                   </button>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
-                          currentPage === page
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ),
-                  )}
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1,
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 text-sm font-semibold rounded-lg border transition ${
+                        currentPage === page
+                          ? "bg-indigo-600 text-white border-indigo-600"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
 
                   <button
-                    onClick={() => setCurrentPage((p) => p + 1)}
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((page) => page + 1)
+                    }
                     disabled={currentPage === totalPages}
                     className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
                   >
@@ -474,8 +710,8 @@ function ProductGridContent() {
               {totalProducts > 0 && (
                 <p className="text-center text-xs text-gray-400 mt-3">
                   Showing {(currentPage - 1) * 12 + 1}–
-                  {Math.min(currentPage * 12, totalProducts)} of {totalProducts}{" "}
-                  products
+                  {Math.min(currentPage * 12, totalProducts)} of{" "}
+                  {totalProducts} products
                 </p>
               )}
             </>
@@ -497,9 +733,9 @@ export default function ProductGrid() {
                 key={i}
                 className="animate-pulse bg-white border border-gray-100 rounded-xl p-4 h-96"
               >
-                <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                <div className="bg-gray-200 h-4 w-2/3 rounded mb-2"></div>
-                <div className="bg-gray-200 h-4 w-1/2 rounded"></div>
+                <div className="bg-gray-200 h-48 rounded-lg mb-4" />
+                <div className="bg-gray-200 h-4 w-2/3 rounded mb-2" />
+                <div className="bg-gray-200 h-4 w-1/2 rounded" />
               </div>
             ))}
           </div>

@@ -8,96 +8,127 @@ const slides = [
   {
     heading: "Welcome to Haanli Bazaar",
     description:
-      "Browse premium products across Electronics, Apparel, Home & Living, and Fitness.",
-    buttonText: "Shop Now",
+      "Discover fashion, electronics, accessories and everyday essentials across our growing marketplace.",
+    buttonText: "Shop All Products",
     buttonHref: "/products",
   },
   {
-    heading: "Top Electronics Deals",
+    heading: "New & Featured",
     description:
-      "Discover the latest gadgets and devices at unbeatable prices. From headphones to monitors.",
+      "Explore selected products from our latest and featured collections across Haanli Bazaar.",
+    buttonText: "Explore Featured",
+    buttonHref: "/products?featured=true",
+  },
+  {
+    heading: "Style for Him",
+    description:
+      "Shop shirts, T-shirts, jackets, jeans, sneakers, watches and more from our men's collection.",
+    buttonText: "Shop Men",
+    buttonHref: "/products?category=Men",
+  },
+  {
+    heading: "Style for Her",
+    description:
+      "Discover dresses, tops, denim, footwear, handbags and accessories from our women's collection.",
+    buttonText: "Shop Women",
+    buttonHref: "/products?category=Women",
+  },
+  {
+    heading: "Latest Electronics",
+    description:
+      "Browse laptops, smartphones, headphones, cameras, keyboards, chargers and everyday technology.",
     buttonText: "Explore Electronics",
     buttonHref: "/products?category=Electronics",
   },
   {
-    heading: "Fresh Arrivals in Apparel",
+    heading: "Accessories for Every Style",
     description:
-      "Stay stylish with our latest collection of clothing and accessories for every occasion.",
-    buttonText: "Shop Apparel",
-    buttonHref: "/products?category=Apparel",
+      "Complete your look with bags, watches, sunglasses and wallets from our accessories collection.",
+    buttonText: "Shop Accessories",
+    buttonHref: "/products?category=Accessories",
   },
   {
-    heading: "Transform Your Home",
+    heading: "Deals Worth Shopping",
     description:
-      "Find everything you need to make your living space beautiful, comfortable, and functional.",
-    buttonText: "Shop Home & Living",
-    buttonHref: "/products?category=Home & Living",
-  },
-  {
-    heading: "Fitness Starts Here",
-    description:
-      "Achieve your health goals with our premium fitness equipment and accessories.",
-    buttonText: "Shop Fitness",
-    buttonHref: "/products?category=Fitness",
+      "Save on selected fashion, electronics and accessories while our latest offers are available.",
+    buttonText: "Shop Sale",
+    buttonHref: "/products?sale=true",
   },
 ];
 
 export default function HeroSection() {
   const { data: session } = useSession();
+
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setAnimating(true);
+
       setTimeout(() => {
         setCurrent((prev) => (prev + 1) % slides.length);
         setAnimating(false);
       }, 400);
-    }, 4000);
+    }, 4500);
 
     return () => clearInterval(timer);
   }, []);
 
+  const changeSlide = (index: number) => {
+    if (index === current) return;
+
+    setAnimating(true);
+
+    setTimeout(() => {
+      setCurrent(index);
+      setAnimating(false);
+    }, 400);
+  };
+
   const slide = slides[current];
 
   return (
-    <section className="relative border-b border-gray-200 overflow-hidden">
+    <section className="relative h-[70vh] min-h-[650px] max-h-[850px] overflow-hidden border-b border-gray-200">
       <div className="absolute inset-0">
         <img
           src="/hero.png"
           alt="Haanli Bazaar"
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-      </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 py-28 text-center">
+        <div className="absolute inset-0 bg-black/55" />
+      </div>
+      <div className="relative mx-auto flex h-full max-w-6xl flex-col items-center justify-center px-4 text-center">
         <div
-          className={`transition-all duration-400 ${
-            animating
-              ? "opacity-0 translate-y-4"
-              : "opacity-100 translate-y-0"
+          className={`transition-all duration-500 ${
+            animating ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100"
           }`}
         >
-          <h1 className="text-4xl sm:text-5xl font-bold text-white">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.3em] text-white/75">
+            Haanli Bazaar
+          </p>
+
+          <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
             {slide.heading}
           </h1>
-          <p className="mt-4 text-gray-200 max-w-xl mx-auto text-lg">
+
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-gray-200 sm:text-lg">
             {slide.description}
           </p>
 
-          <div className="mt-8 flex gap-4 justify-center flex-wrap">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
               href={slide.buttonHref}
-              className="bg-white text-indigo-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+              className="inline-flex min-w-[150px] items-center justify-center whitespace-nowrap rounded-full bg-white px-7 py-3.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-gray-100"
             >
               {slide.buttonText}
             </Link>
+
             {!session?.user && (
               <Link
                 href="/register"
-                className="border border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-700 transition"
+                className="inline-flex min-w-[150px] items-center justify-center whitespace-nowrap rounded-full border border-white/80 bg-black/10 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-white hover:text-gray-900"
               >
                 Create Account
               </Link>
@@ -105,19 +136,17 @@ export default function HeroSection() {
           </div>
         </div>
 
-        <div className="flex justify-center gap-2 mt-10">
-          {slides.map((_, i) => (
+        <div className="mt-12 flex justify-center gap-2">
+          {slides.map((slideItem, index) => (
             <button
-              key={i}
-              onClick={() => {
-                setAnimating(true);
-                setTimeout(() => {
-                  setCurrent(i);
-                  setAnimating(false);
-                }, 400);
-              }}
+              key={slideItem.heading}
+              type="button"
+              onClick={() => changeSlide(index)}
+              aria-label={`Show slide ${index + 1}`}
               className={`h-1.5 rounded-full transition-all ${
-                i === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                index === current
+                  ? "w-7 bg-white"
+                  : "w-2 bg-white/40 hover:bg-white/70"
               }`}
             />
           ))}

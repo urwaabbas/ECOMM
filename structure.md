@@ -1,13 +1,13 @@
 # E-commerce Project Folder Structure
 
-This is the current project structure as it exists in the workspace.
+This is the current source structure. Generated folders such as `.next/` and
+dependencies in `node_modules/` are intentionally omitted.
 
 ```text
 Ecomm/
 ├── .env
 ├── .gitattributes
 ├── .gitignore
-├── .next/
 ├── AGENTS.md
 ├── CLAUDE.md
 ├── README.md
@@ -16,7 +16,6 @@ Ecomm/
 ├── next-env.d.ts
 ├── next.config.ts
 ├── tsconfig.json
-├── tsconfig.tsbuildinfo
 ├── eslint.config.mjs
 ├── postcss.config.mjs
 ├── structure.md
@@ -27,77 +26,72 @@ Ecomm/
 │   ├── admin/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
-│   │   ├── chat/
-│   │   │   └── page.tsx
-│   │   ├── login/
-│   │   │   └── page.tsx
-│   │   ├── newsletter/
-│   │   │   └── page.tsx
-│   │   ├── orders/
-│   │   │   └── page.tsx
-│   │   ├── products/
-│   │   │   └── page.tsx
-│   │   └── users/
-│   │       └── page.tsx
+│   │   ├── chat/page.tsx
+│   │   ├── login/page.tsx
+│   │   ├── newsletter/page.tsx
+│   │   ├── orders/page.tsx
+│   │   ├── products/page.tsx
+│   │   ├── reviews/page.tsx
+│   │   └── users/page.tsx
 │   ├── api/
 │   │   ├── admin/
-│   │   │   ├── fcm-token/
-│   │   │   ├── newsletter/
-│   │   │   ├── notifications/
-│   │   │   ├── orders/
-│   │   │   ├── products/
-│   │   │   └── ...
-│   │   ├── ai/
-│   │   │   └── chat/
-│   │   ├── auth/
-│   │   ├── cart/
-│   │   ├── categories/
-│   │   ├── checkout/
-│   │   ├── contact/
-│   │   ├── forgot-password/
-│   │   ├── newsletter/
-│   │   ├── notifications/
-│   │   ├── orders/
-│   │   ├── products/
-│   │   ├── register/
-│   │   ├── reset-password/
-│   │   ├── seed/
-│   │   ├── test-email/
-│   │   ├── upload/
-│   │   ├── user/
-│   │   ├── verify-email/
-│   │   ├── webhook/
-│   │   └── wishlist/
-│   ├── cart/
-│   │   └── page.tsx
-│   ├── checkout/
-│   │   └── page.tsx
-│   ├── contact/
-│   │   └── page.tsx
+│   │   │   ├── fcm-token/route.ts
+│   │   │   ├── newsletter/route.ts
+│   │   │   ├── notifications/route.ts
+│   │   │   ├── orders/route.ts
+│   │   │   ├── products/route.ts
+│   │   │   ├── reviews/route.ts
+│   │   │   ├── search/route.ts
+│   │   │   ├── stats/route.ts
+│   │   │   └── users/route.ts
+│   │   ├── ai/chat/route.ts
+│   │   ├── auth/[...nextauth]/options.ts
+│   │   ├── auth/[...nextauth]/route.ts
+│   │   ├── cart/route.ts
+│   │   ├── categories/route.ts
+│   │   ├── checkout/route.ts
+│   │   ├── contact/route.ts
+│   │   ├── forgot-password/route.ts
+│   │   ├── newsletter/route.ts
+│   │   ├── notifications/route.ts
+│   │   ├── orders/route.ts
+│   │   ├── products/route.ts
+│   │   ├── products/notifications/route.ts
+│   │   ├── products/[id]/route.ts
+│   │   ├── register/route.ts
+│   │   ├── reset-password/route.ts
+│   │   ├── reviews/[productId]/route.ts
+│   │   ├── seed/route.ts
+│   │   ├── test-email/route.ts
+│   │   ├── upload/route.ts
+│   │   ├── user/change-password/route.ts
+│   │   ├── user/fcm-token/route.ts
+│   │   ├── user/link-google/route.ts
+│   │   ├── user/profile/route.ts
+│   │   ├── verify-email/route.ts
+│   │   ├── verify-reset-otp/route.ts
+│   │   ├── webhook/route.ts
+│   │   └── wishlist/route.ts
+│   ├── cart/page.tsx
+│   ├── checkout/page.tsx
+│   ├── contact/page.tsx
 │   ├── favicon.ico
-│   ├── forgot-password/
-│   │   └── page.tsx
+│   ├── forgot-password/page.tsx
 │   ├── globals.css
+│   ├── icon.svg
 │   ├── layout.tsx
-│   ├── login/
-│   │   └── page.tsx
-│   ├── orders/
-│   │   └── page.tsx
+│   ├── login/page.tsx
+│   ├── orders/page.tsx
 │   ├── page.tsx
-│   ├── payment/
-│   │   ├── fail/
-│   │   └── success/
-│   ├── products/
-│   │   ├── page.tsx
-│   │   └── [id]/
-│   ├── profile/
-│   │   └── page.tsx
-│   ├── register/
-│   │   └── page.tsx
-│   ├── reset-password/
-│   │   └── page.tsx
-│   └── wishlist/
-│       └── page.tsx
+│   ├── payment/fail/page.tsx
+│   ├── payment/success/page.tsx
+│   ├── products/page.tsx
+│   ├── products/[id]/page.tsx
+│   ├── profile/page.tsx
+│   ├── register/page.tsx
+│   ├── reset-password/page.tsx
+│   ├── verify-email/page.tsx
+│   └── wishlist/page.tsx
 ├── components/
 │   ├── admin/
 │   │   ├── AdminChatBell.tsx
@@ -134,14 +128,14 @@ Ecomm/
 │   ├── fcm.ts
 │   ├── firebase-admin.ts
 │   ├── firebase.ts
+│   ├── gemini.ts
 │   ├── groq.ts
 │   ├── invoice.ts
 │   ├── product-image.ts
 │   ├── push-notification.ts
 │   ├── seed.ts
 │   └── utilis.ts
-├── middleware/
-│   └── middleware.ts
+├── middleware/middleware.ts
 ├── models/
 │   ├── Cart.ts
 │   ├── Category.ts
@@ -150,6 +144,7 @@ Ecomm/
 │   ├── Notification.ts
 │   ├── Order.ts
 │   ├── Product.ts
+│   ├── Review.ts
 │   ├── User.ts
 │   └── Wishlist.ts
 ├── public/
@@ -168,34 +163,30 @@ Ecomm/
 │   ├── auth.service.ts
 │   ├── category.service.ts
 │   └── product.service.ts
-├── types/
-│   └── next-auth.d.ts
-├── validations/
-├── node_modules/
-└── .next/
+├── types/next-auth.d.ts
+└── validations/
 ```
 
 ## Project structure summary
 
-- app/: main frontend routes and Next.js pages
-- app/api/: API route groups for auth, products, orders, notifications, checkout, upload, and more
-- components/: reusable UI and provider components
-- components/admin/: admin-specific dashboard and assistant utilities
-- controllers/: API handlers and request logic
-- services/: business-layer services for auth, categories, and products
-- models/: Mongo/Mongoose schemas
-- lib/: shared utilities, database, auth helpers, email, notifications, and integrations
-- middleware/: request middleware
-- public/: static assets and PWA-related files
-- types/: TypeScript declarations
-- validations/: validation logic and schema checks
-- config/: project config folders
-- helpers/: supporting helper utilities
+- `app/`: main frontend routes and Next.js pages
+- `app/api/`: API route handlers for authentication, products, orders, notifications, checkout, uploads, and more
+- `components/`: reusable UI and provider components
+- `components/admin/`: admin dashboard, search, notification, and assistant components
+- `controllers/`: API handlers and request logic
+- `services/`: business-layer services for authentication, categories, and products
+- `models/`: MongoDB/Mongoose schemas
+- `lib/`: shared utilities, database access, authentication helpers, email, notifications, and integrations
+- `middleware/`: request middleware
+- `public/`: static assets and Firebase messaging service worker
+- `types/`: TypeScript declarations
+- `validations/`: validation logic and schema checks
+- `config/` and `helpers/`: project configuration and supporting utilities
 
 ## Quick understanding
 
-- Frontend pages live in app/
-- Backend endpoints are under app/api/
-- Database models live in models/
-- Business logic is split between controllers/ and services/
-- Shared utilities and integrations live in lib/
+- Frontend pages live in `app/`
+- Backend endpoints are under `app/api/`
+- Database models live in `models/`
+- Business logic is split between `controllers/` and `services/`
+- Shared utilities and integrations live in `lib/`

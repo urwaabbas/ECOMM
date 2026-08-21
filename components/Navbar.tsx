@@ -17,11 +17,11 @@ const megaMenus: Record<string, MegaMenuSection[]> = {
   "New & Featured": [
     {
       title: "Featured",
-      items: ["New Arrivals", "Best Sellers", "Trending", "Latest Products"],
+      items: ["All Featured"],
     },
     {
-      title: "Shop",
-      items: ["Fashion", "Electronics", "Accessories", "Deals"],
+      title: "Shop Featured",
+      items: ["Men", "Women", "Electronics", "Accessories"],
     },
   ],
 
@@ -47,7 +47,7 @@ const megaMenus: Record<string, MegaMenuSection[]> = {
     },
     {
       title: "Shoes",
-      items: ["Sneakers", "Casual Shoes", "Sports Shoes", "Shop All"],
+      items: ["Sneakers", "Heels", "Flats", "Shop All"],
     },
     {
       title: "Accessories",
@@ -62,7 +62,7 @@ const megaMenus: Record<string, MegaMenuSection[]> = {
     },
     {
       title: "Accessories",
-      items: ["Chargers", "Cases", "Keyboards", "Power Banks"],
+      items: ["Chargers", "Keyboards", "Power Banks"],
     },
   ],
 
@@ -76,7 +76,7 @@ const megaMenus: Record<string, MegaMenuSection[]> = {
   Sale: [
     {
       title: "Sale",
-      items: ["Today's Deals", "Best Discounts", "Clearance", "Shop All Sale"],
+      items: ["All Sale", "Men", "Women", "Electronics", "Accessories"],
     },
   ],
 };
@@ -89,6 +89,46 @@ const mainNavigation = [
   "Accessories",
   "Sale",
 ];
+
+function getMainNavigationHref(item: string) {
+  if (item === "New & Featured") {
+    return "/products?featured=true";
+  }
+
+  if (item === "Sale") {
+    return "/products?sale=true";
+  }
+
+  return `/products?category=${encodeURIComponent(item)}`;
+}
+
+function getMegaMenuHref(menu: string, item: string) {
+  if (menu === "New & Featured") {
+    if (item === "All Featured") {
+      return "/products?featured=true";
+    }
+
+    return `/products?category=${encodeURIComponent(
+      item,
+    )}&featured=true`;
+  }
+
+  if (menu === "Sale") {
+    if (item === "All Sale") {
+      return "/products?sale=true";
+    }
+
+    return `/products?category=${encodeURIComponent(item)}&sale=true`;
+  }
+
+  if (item === "Shop All") {
+    return `/products?category=${encodeURIComponent(menu)}`;
+  }
+
+  return `/products?category=${encodeURIComponent(
+    menu,
+  )}&subcategory=${encodeURIComponent(item)}`;
+}
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -400,8 +440,7 @@ export default function Navbar() {
         onMouseLeave={() => setMegaMenu(null)}
       >
         <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-6 px-4 md:px-6">
-
-          {/*Logo*/}
+          {/* LOGO */}
 
           <Link
             href="/"
@@ -414,7 +453,7 @@ export default function Navbar() {
               width={220}
               height={50}
               priority
-            className="h-12 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
           </Link>
 
@@ -427,6 +466,10 @@ export default function Navbar() {
                 type="button"
                 onMouseEnter={() => setMegaMenu(item)}
                 onFocus={() => setMegaMenu(item)}
+                onClick={() => {
+                  router.push(getMainNavigationHref(item));
+                  setMegaMenu(null);
+                }}
                 className={`relative px-3 py-7 text-sm font-semibold transition xl:text-[15px] ${
                   item === "Sale"
                     ? "text-red-600"
@@ -639,7 +682,7 @@ export default function Navbar() {
                     {section.items.map((item) => (
                       <Link
                         key={item}
-                        href="/products"
+                        href={getMegaMenuHref(megaMenu, item)}
                         onClick={() => setMegaMenu(null)}
                         className="block text-sm text-gray-500 transition hover:text-gray-900"
                       >
@@ -689,7 +732,7 @@ export default function Navbar() {
               {mainNavigation.map((item) => (
                 <Link
                   key={item}
-                  href="/products"
+                  href={getMainNavigationHref(item)}
                   onClick={() => setMenuOpen(false)}
                   className={`flex items-center justify-between py-3 text-lg font-semibold ${
                     item === "Sale" ? "text-red-600" : "text-gray-900"
